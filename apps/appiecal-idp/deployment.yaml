@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: idp
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: idp
+  template:
+    metadata:
+      labels:
+        app: idp
+    spec:
+      containers:
+      - name: idp
+        image: ghcr.io/ijskoud/appiecal-idp:1.0.4
+        ports:
+        - containerPort: 8080
