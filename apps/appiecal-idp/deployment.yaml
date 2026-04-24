@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: idp
+  name: appiecal-idp
   namespace: default
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: idp
+      app: appiecal-idp
   template:
     metadata:
       labels:
-        app: idp
+        app: appiecal-idp
     spec:
       containers:
-      - name: idp
+      - name: appiecal-idp
         image: ghcr.io/ijskoud/appiecal-idp@sha256:2cedce78c0d42686abf75cfdf18619d53115a8e4f97669ea799256b686823be8
         ports:
         - containerPort: 8080
