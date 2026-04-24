@@ -15,6 +15,6 @@ spec:
     spec:
       containers:
       - name: appiecal-idp
-        image: ghcr.io/ijskoud/appiecal-idp@sha256:2cedce78c0d42686abf75cfdf18619d53115a8e4f97669ea799256b686823be8
+        image: ghcr.io/ijskoud/appiecal-idp@sha256:b4d35a741b4d1640a9ad064b9d5f4f5148aef70a3d5a56a5869009e9184676ce
         ports:
         - containerPort: 8080
