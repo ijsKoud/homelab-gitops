@@ -3,6 +3,8 @@ kind: Deployment
 metadata:
   name: appiecal-idp
   namespace: default
+  annotations:
+    secrets.phase.dev/redeploy: 'true'
 spec:
   replicas: 1
   selector:
@@ -14,7 +16,23 @@ spec:
         app: appiecal-idp
     spec:
       containers:
-      - name: appiecal-idp
-        image: ghcr.io/ijskoud/appiecal-idp@sha256:b4d35a741b4d1640a9ad064b9d5f4f5148aef70a3d5a56a5869009e9184676ce
-        ports:
-        - containerPort: 8080
+        - name: appiecal-idp
+          image: 
+          ports:
+            - containerPort: 8080
+          env:
+            - name: IDP_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: appiecal
+                  key: IDP_ENCRYPTION_KEY
+            - name: JDBC_URL
+              valueFrom:
+                secretKeyRef:
+                  name: appiecal
+                  key: JDB_URL
+            - name: JWKS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: appiecal
+                  key: JWKS_URL
