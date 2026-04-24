@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: appiecal-idp
-          image: ghcr.io/ijskoud/appiecal-idp@sha256:040cc5e220800958ef25c2a20c9ed199aa355a7d3997288846be06bbb24b9558
+          image: ghcr.io/ijskoud/appiecal-idp@sha256:24dd5eb587f3affee110052312102fa810921d071ffb2fe583054a86ea2cb132
           ports:
             - containerPort: 8080
           env:
@@ -30,7 +30,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: appiecal-secrets
-                  key: JDB_URL
+                  key: JDBC_URL
             - name: JWKS_URL
               valueFrom:
                 secretKeyRef:
