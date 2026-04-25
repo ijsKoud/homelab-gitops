@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: appiecal-sync
+  namespace: default
+  annotations:
+    secrets.phase.dev/redeploy: 'true'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: appiecal-sync
+  template:
+    metadata:
+      labels:
+        app: appiecal-sync
+    spec:
+      containers:
+        - name: appiecal-sync
+          image: ghcr.io/ijskoud/appiecal-sync@sha256:1e80f6aeded05f07d143512181b48d6deb65ba052fccc95b5451177262cfc428
+          ports:
+            - containerPort: 8080
+          env:
+            - name: JDBC_URL
+              valueFrom:
+                secretKeyRef:
+                  name: appiecal-sync-secrets
+                  key: JDBC_URL
+            - name: JWKS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: appiecal-sync-secrets
+                  key: JWKS_URL
+            - name: M2M_APPLICATION_TOKEN_URL
+              valueFrom:
+                secretKeyRef:
+                  name: appiecal-sync-secrets
+                  key: M2M_APPLICATION_TOKEN_URL
+            - name: M2M_APPLICATION_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: appiecal-sync-secrets
+                  key: M2M_APPLICATION_USERNAME
+            - name: M2M_APPLICATION_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: appiecal-sync-secrets
+                  key: M2M_APPLICATION_PASSWORD
+            - name: M2M_APPLICATION_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: appiecal-sync-secrets
+                  key: M2M_APPLICATION_CLIENT_ID
