@@ -1,0 +1,66 @@
+name: Bootstrap New Application
+
+on:
+  workflow_dispatch:
+    inputs:
+      application_name:
+        description: "Name of the application"
+        required: true
+      phase_application_name:
+        description: "The name of the application within Phase Console"
+        required: true
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout GitOps repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set variables
+        id: vars
+        run: |
+          APP=${{ github.event.inputs.application_name }}
+          PHASE_APP=${{ github.event.inputs.phase_application_name }}
+
+          echo "APP=$APP" >> $GITHUB_ENV
+          echo "PHASE_APP=$PHASE_APP" >> $GITHUB_ENV
+          echo "DIR=apps/$APP" >> $GITHUB_ENV
+
+      - name: Create app directory
+        run: |
+          mkdir -p $DIR
+
+      - name: Copy template files
+        run: |
+          cp templates/ingress.template.yaml $DIR/ingress.yaml
+          cp templates/service.template.yaml $DIR/service.yaml
+          cp templates/phase-secret.template.yaml $DIR/phase-secret.yaml
+
+      - name: Replace placeholders in files
+        run: |
+          find $DIR -type f -name "*.yaml" -exec sed -i "s|APPLICATION_NAME|$APP|g" {} \;
+          find $DIR -type f -name "*.yaml" -exec sed -i "s|PHASE_APPLICATION_NAME|$PHASE_APP|g" {} \;
+
+      - name: Show generated files
+        run: |
+          echo "Generated files:"
+          ls -R apps/
+
+      - name: Commit & push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+
+          git add apps/$APP
+
+          if git diff --staged --quiet; then
+            echo "No changes detected."
+            exit 0
+          fi
+
+          git commit -m "chore: bootstrap new app $APP"
+          git push
