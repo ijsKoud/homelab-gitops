@@ -36,9 +36,9 @@ jobs:
 
       - name: Copy template files
         run: |
-          cp templates/ingress.template.yaml $DIR/ingress.yaml
-          cp templates/service.template.yaml $DIR/service.yaml
-          cp templates/phase-secret.template.yaml $DIR/phase-secret.yaml
+          cp template/ingress.template.yaml $DIR/ingress.yaml
+          cp template/service.template.yaml $DIR/service.yaml
+          cp template/phase-secret.template.yaml $DIR/phase-secret.yaml
 
       - name: Replace placeholders in files
         run: |
