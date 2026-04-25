@@ -42,8 +42,8 @@ jobs:
 
       - name: Replace placeholders in files
         run: |
-          find $DIR -type f -name "*.yaml" -exec sed -i "s|APPLICATION_NAME|$APP|g" {} \;
           find $DIR -type f -name "*.yaml" -exec sed -i "s|PHASE_APPLICATION_NAME|$PHASE_APP|g" {} \;
+          find $DIR -type f -name "*.yaml" -exec sed -i "s|APPLICATION_NAME|$APP|g" {} \;
 
       - name: Show generated files
         run: |
