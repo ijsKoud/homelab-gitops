@@ -1,0 +1,24 @@
+{
+  "metadata": {
+    "name": "APP_NAME_PLACEHOLDER"
+  },
+  "spec": {
+    "project": "default",
+    "source": {
+      "repoURL": "https://github.com/ijskoud/homelab-gitops",
+      "path": "apps/APP_NAME_PLACEHOLDER",
+      "targetRevision": "HEAD"
+    },
+    "destination": {
+      "server": "https://kubernetes.default.svc",
+      "namespace": "default"
+    },
+    "syncPolicy": {
+      "syncPolicy": {
+        "syncOptions": [
+          "CreateNamespace=true"
+        ]
+      }
+    }
+  }
+}
