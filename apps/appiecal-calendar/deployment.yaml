@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: appiecal-schedule
+  name: appiecal-calendar
   namespace: default
   annotations:
     secrets.phase.dev/redeploy: 'true'
@@ -9,25 +9,30 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: appiecal-schedule
+      app: appiecal-calendar
   template:
     metadata:
       labels:
-        app: appiecal-schedule
+        app: appiecal-calendar
     spec:
       containers:
-        - name: appiecal-schedule
-          image: ghcr.io/ijskoud/appiecal-schedule@sha256:6fbb0244841636b0aeaedd7ff9f671f487686950e94321e61bea5eb621c037bc
+        - name: appiecal-calendar
+          image: ghcr.io/ijskoud/appiecal-calendar@sha256:94cd9eda99e4f6c324660ab4b99c7679ec44c1e86019ba4f59f319e83ed2c544
           ports:
             - containerPort: 8080
           env:
+            - name: IDP_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: appiecal-calendar-secrets
+                  key: IDP_ENCRYPTION_KEY
             - name: JDBC_URL
               valueFrom:
                 secretKeyRef:
-                  name: appiecal-schedule-secrets
+                  name: appiecal-calendar-secrets
                   key: JDBC_URL
             - name: JWKS_URL
               valueFrom:
                 secretKeyRef:
-                  name: appiecal-schedule-secrets
+                  name: appiecal-calendar-secrets
                   key: JWKS_URL
