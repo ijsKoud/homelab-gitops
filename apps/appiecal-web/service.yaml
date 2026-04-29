@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: appiecal-web
+  namespace: default
+spec:
+  selector:
+    app: appiecal-web
+  ports:
+    - port: 80
+      targetPort: 8080
+  type: ClusterIP
