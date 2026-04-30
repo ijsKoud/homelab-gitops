@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: appiecal-web-gql
+  namespace: default
+  annotations:
+    secrets.phase.dev/redeploy: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: appiecal-web-gql
+  template:
+    metadata:
+      labels:
+        app: appiecal-web-gql
+    spec:
+      containers:
+        - name: appiecal-web-gql
+          image: ghcr.io/ijskoud/appiecal-web-gql@sha256:4206a0480da2fb179416b555aa24e1967621be97caca5b34e9aecbebc65dc9c8
+          ports:
+            - containerPort: 4000
+          env:
+            - name: BASE_API_URL
+              valueFrom:
+                secretKeyRef:
+                  name: appiecal-web-gql-secrets
+                  key: BASE_API_URL
