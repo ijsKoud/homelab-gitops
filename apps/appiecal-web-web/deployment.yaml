@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: appiecal-web-web
+  namespace: default
+  annotations:
+    secrets.phase.dev/redeploy: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: appiecal-web-web
+  template:
+    metadata:
+      labels:
+        app: appiecal-web-web
+    spec:
+      containers:
+        - name: appiecal-web-web
+          image: ghcr.io/ijskoud/appiecal-web-web@sha256:4749db89d20e0ef271e814228a2cbc6734ef7a8bfba49889b1ae213dda986fc1
+          ports:
+            - containerPort: 3000
+          env:
+            - name: GRAPHQL_BACKEND_URL
+              valueFrom:
+                secretKeyRef:
+                  name: appiecal-web-web-secrets
+                  key: GRAPHQL_BACKEND_URL
+            - name: GRAPHQL_SCHEMA_URL
+              valueFrom:
+                secretKeyRef:
+                  name: appiecal-web-web-secrets
+                  key: GRAPHQL_BACKEND_URL
+            - name: NEXTAUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: appiecal-web-web-secrets
+                  key: NEXTAUTH_SECRET
+            - name: NEXTAUTH_URL
+              valueFrom:
+                secretKeyRef:
+                  name: appiecal-web-web-secrets
+                  key: NEXTAUTH_URL
+            - name: AUTHENTIK_ISSUER
+              valueFrom:
+                secretKeyRef:
+                  name: appiecal-web-web-secrets
+                  key: AUTHENTIK_ISSUER
+            - name: AUTHENTIK_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: appiecal-web-web-secrets
+                  key: AUTHENTIK_CLIENT_SECRET
+            - name: AUTHENTIK_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: appiecal-web-web-secrets
+                  key: AUTHENTIK_CLIENT_ID
