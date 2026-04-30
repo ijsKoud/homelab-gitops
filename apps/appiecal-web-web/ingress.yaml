@@ -8,7 +8,7 @@ metadata:
     traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
 spec:
   rules:
-    - host: appiecal-web-web.k3s.home.klrnbk.nl
+    - host: appiecal.k3s.home.klrnbk.nl
       http:
         paths:
           - path: /
