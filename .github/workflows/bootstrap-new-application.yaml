@@ -6,6 +6,10 @@ on:
       application_name:
         description: "Name of the application"
         required: true
+      application_port:
+        description: "The port the application is listening on"
+        required: true
+        default: 8080
       phase_application_name:
         description: "The name of the application within Phase Console"
         required: true
@@ -25,10 +29,12 @@ jobs:
         run: |
           APP=${{ github.event.inputs.application_name }}
           PHASE_APP=${{ github.event.inputs.phase_application_name }}
+          PORT=${{ github.event.inputs.application_port }}
 
           echo "APP=$APP" >> $GITHUB_ENV
           echo "PHASE_APP=$PHASE_APP" >> $GITHUB_ENV
           echo "DIR=apps/$APP" >> $GITHUB_ENV
+          echo "PORT=$PORT" >> $GITHUB_ENV
 
       - name: Create app directory
         run: |
@@ -44,6 +50,7 @@ jobs:
         run: |
           find $DIR -type f -name "*.yaml" -exec sed -i "s|PHASE_APPLICATION_NAME|$PHASE_APP|g" {} \;
           find $DIR -type f -name "*.yaml" -exec sed -i "s|APPLICATION_NAME|$APP|g" {} \;
+          find $DIR -type f -name "*.yaml" -exec sed -i "s|PORT|$PORT|g" {} \;
 
       - name: Show generated files
         run: |
