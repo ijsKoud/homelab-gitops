@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: appiecal-web-gql
-          image: ghcr.io/ijskoud/appiecal-web-gql@sha256:1d1d9d6a66b0e889ef40418c931cf08a2a0ead34245f39e1539f1751bfb14999
+          image: ghcr.io/ijskoud/appiecal-web-gql@sha256:b444127fa671d572009ab2574e44764170fd8b8aa6f7383b58b10c9fb4ae83ec
           ports:
             - containerPort: 4000
           env:
