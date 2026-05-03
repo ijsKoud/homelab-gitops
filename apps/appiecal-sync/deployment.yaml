@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: appiecal-sync
-          image: ghcr.io/ijskoud/appiecal-sync@sha256:1fc5b2fcf04e21a70410d9faa2dd52d9fd5e2d911b3064906a89d0c3f4c3bca4
+          image: ghcr.io/ijskoud/appiecal-sync@sha256:e786a7d3a64ab1cb86df29fe9a842a23ed51683273f39b0669b10fdb3fe850ee
           ports:
             - containerPort: 8080
           env:
