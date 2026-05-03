@@ -44,7 +44,7 @@ spec:
                 echo "Token received ✔"
 
                 echo "Calling API..."
-                curl -s -X GET "$API_URL" \
+                curl -s -X POST "$API_URL" \
                   -H "X-Authorization: $ACCESS_TOKEN" \
                   -H "Content-Type: application/json"
 
