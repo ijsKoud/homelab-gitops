@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: appiecal-schedule
-          image: ghcr.io/ijskoud/appiecal-schedule@sha256:b10b2815b94a41ee16f2974f6baf04544bb44d59d9680d65337a0e163388d039
+          image: ghcr.io/ijskoud/appiecal-schedule@sha256:f0738be8db30df882999c383de4efe5f0c12801b8c05fb9c168c15de55563b78
           ports:
             - containerPort: 8080
           env:
