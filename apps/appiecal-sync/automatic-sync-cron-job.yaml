@@ -31,7 +31,7 @@ spec:
                     -d "client_id=$M2M_APPLICATION_CLIENT_ID" \
                     -d "username=$M2M_APPLICATION_USERNAME" \
                     -d "password=$M2M_APPLICATION_PASSWORD" \
-                    -d "scope=profile openid email https://klrnbk.nl/projects/appiecal:use")
+                    -d "scope=profile openid email scope https://klrnbk.nl/projects/appiecal:use")
 
                   # Extract access token
                   ACCESS_TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r '.id_token')
