@@ -5,8 +5,8 @@ metadata:
 spec:
   schedule: "0 11,23 * * *" # 11 AM and 11 PM daily
   concurrencyPolicy: Forbid
-  successfulJobsHistoryLimit: 3
-  failedJobsHistoryLimit: 3
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
   jobTemplate:
     spec:
       backoffLimit: 2
