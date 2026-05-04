@@ -34,7 +34,7 @@ spec:
                     -d "scope=profile openid email https://klrnbk.nl/projects/appiecal:use")
 
                   # Extract access token
-                  ACCESS_TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r '.access_token')
+                  ACCESS_TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r '.id_token')
 
                   if [[ "$ACCESS_TOKEN" == "null" || -z "$ACCESS_TOKEN" ]]; then
                     echo "Failed to obtain token:"
@@ -45,10 +45,17 @@ spec:
                   echo "Token received ✔"
 
                   echo "Calling API..."
-                  curl -s -X POST "$API_URL" \
+                  TRIGGER_RESPONSE=(curl -s -X POST "$API_URL" \
                     -H "X-Authorization: $ACCESS_TOKEN" \
-                    -H "Content-Type: application/json"
+                    -H "Content-Type: application/json")
 
+                  TRIGGER_RESPONSE_ERROR_CODE=$(echo "$TRIGGER_RESPONSE" | jq -r '.status')
+                  if [[ "$TRIGGER_RESPONSE_ERROR_CODE" == 403 ]]; then 
+                    echo "Failed to trigger automatic sync"
+                    echo "$TRIGGER_RESPONSE"
+                    exit 1
+                  fi
+                  
                   echo "Automatic sync triggered"
               env:
                 - name: M2M_APPLICATION_TOKEN_URL
