@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: appiecal-calendar
-          image: ghcr.io/ijskoud/appiecal-calendar@sha256:73bb3e359d2fecbf711164971b8e730a6524c7d557377a01a7b4d6856627a8c4
+          image: ghcr.io/ijskoud/appiecal-calendar@sha256:72bc413a0f8fe6a79934712e29c3abf497c546507e52ee31c3be960d546298e7
           ports:
             - containerPort: 8080
           env:
