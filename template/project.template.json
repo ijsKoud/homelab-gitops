@@ -1,0 +1,28 @@
+{
+	"metadata": {
+		"name": "PROJECT_NAME_PLACEHOLDER",
+		"namespace": "default"
+	},
+	"spec": {
+		"description": "PROJECT_REPO_URL",
+		"sourceRepos": ["*"],
+		"destinations": [
+			{
+				"namespace": "*",
+				"server": "*"
+			}
+		],
+		"clusterResourceWhitelist": [
+			{
+				"group": "*",
+				"kind": "*"
+			}
+		],
+		"namespaceResourceWhitelist": [
+			{
+				"group": "*",
+				"kind": "*"
+			}
+		]
+	}
+}
