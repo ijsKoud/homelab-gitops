@@ -1,29 +1,16 @@
 {
-	"upsert": true,
 	"project": {
 		"metadata": {
-			"name": "PROJECT_NAME_PLACEHOLDER",
-			"namespace": "default"
+			"name": "PROJECT_NAME_PLACEHOLDER"
 		},
 		"spec": {
 			"description": "PROJECT_REPO_URL",
-			"sourceRepos": ["*"],
+			"sourceRepos": ["https://github.com/ijskoud/homelab-gitops.git"],
 			"destinations": [
 				{
 					"namespace": "*",
-					"server": "*"
-				}
-			],
-			"clusterResourceWhitelist": [
-				{
-					"group": "*",
-					"kind": "*"
-				}
-			],
-			"namespaceResourceWhitelist": [
-				{
-					"group": "*",
-					"kind": "*"
+					"server": "*",
+					"name": "*"
 				}
 			]
 		}
