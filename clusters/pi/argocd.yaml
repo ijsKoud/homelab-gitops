@@ -1,0 +1,21 @@
+# clusters/pi/argocd.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd
+  namespace: argocd
+  annotations: { argocd.argoproj.io/sync-wave: "-3" }
+spec:
+  project: default
+  sources:
+    - repoURL: https://argoproj.github.io/argo-helm
+      chart: argo-cd
+      targetRevision: 9.x.y            # the exact version helm list showed
+      helm: { valueFiles: [$values/argocd/values.yaml] }
+    - repoURL: git@github.com:ijskoud/homelab-gitops.git
+      targetRevision: main
+      ref: values
+  destination: { server: https://kubernetes.default.svc, namespace: argocd }
+  syncPolicy:
+    automated: { prune: true, selfHeal: true }
+    syncOptions: [ServerSideApply=true]
