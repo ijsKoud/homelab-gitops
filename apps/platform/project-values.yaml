@@ -1,0 +1,3 @@
+description: DNS, login, tunnel
+clusterResourceWhitelist:
+  - { group: "*", kind: "*" }
