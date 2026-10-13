@@ -1,0 +1,5 @@
+name: ""
+description: ""
+sourceRepos: ["*"]
+clusterResourceWhitelist:
+  - { group: "", kind: Namespace }
