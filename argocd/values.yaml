@@ -1,0 +1,16 @@
+configs:
+  params:
+    server.insecure: true            # Traefik terminates TLS in front of it
+  cm:
+    # Let the root app wait until each child Application is Healthy (makes sync waves work)
+    resource.customizations.health.argoproj.io_Application: |
+      hs = {}
+      hs.status = "Progressing"
+      hs.message = ""
+      if obj.status ~= nil and obj.status.health ~= nil then
+        hs.status = obj.status.health.status
+        if obj.status.health.message ~= nil then
+          hs.message = obj.status.health.message
+        end
+      end
+      return hs
