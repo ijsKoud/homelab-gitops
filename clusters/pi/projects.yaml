@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: projects
+  namespace: argocd
+  annotations: { argocd.argoproj.io/sync-wave: "-4" }
+spec:
+  goTemplate: true
+  generators:
+    - git:
+        repoURL: git@github.com:ijskoud/homelab-gitops.git
+        revision: main
+        directories:
+          - path: apps/*
+  template:
+    metadata:
+      name: "project-{{.path.basename}}"
+    spec:
+      project: default
+      source:
+        repoURL: git@github.com:ijskoud/homelab-gitops.git
+        targetRevision: main
+        path: charts/app-project
+        helm:
+          valuesObject:
+            name: "{{.path.basename}}"
+          valueFiles: ["../../apps/{{.path.basename}}/project-values.yaml"]
+          ignoreMissingValueFiles: true
+      destination: { server: https://kubernetes.default.svc, namespace: argocd }
+      syncPolicy:
+        automated: { prune: true, selfHeal: true }
