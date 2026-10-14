@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: traefik
+  namespace: argocd
+  annotations: { argocd.argoproj.io/sync-wave: "-2" }
+spec:
+  project: default
+  source:
+    repoURL: https://traefik.github.io/charts
+    chart: traefik
+    targetRevision: 41.*
+    helm:
+      valuesObject:
+        deployment: { replicas: 2 }
+        ingressClass: { enabled: true, isDefaultClass: true }
+        providers:
+          kubernetesCRD: { allowCrossNamespace: true }
+        service:
+          type: LoadBalancer
+          annotations:
+            metallb.io/loadBalancerIPs: 192.168.2.20
+        ports:
+          web:
+            redirections:
+              entryPoint: { to: websecure, scheme: https, permanent: true }
+  destination: { server: https://kubernetes.default.svc, namespace: traefik }
+  syncPolicy:
+    automated: { prune: true, selfHeal: true }
+    syncOptions: [CreateNamespace=true, ServerSideApply=true]
