@@ -3,7 +3,7 @@ kind: StorageClass
 metadata: { name: nfs-nas }
 provisioner: nfs.csi.k8s.io
 parameters:
-  server: nas-1.home.klrnbk.nl
+  server: 192.168.2.104
   share: /volume1/k3s
 reclaimPolicy: Retain # deleting a PVC never deletes data on the NAS
 volumeBindingMode: Immediate
