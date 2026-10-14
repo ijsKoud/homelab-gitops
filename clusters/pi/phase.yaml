@@ -3,36 +3,33 @@ kind: Application
 metadata:
   name: phase
   namespace: argocd
-  annotations: { argocd.argoproj.io/sync-wave: "0" }
+  annotations: { argocd.argoproj.io/sync-wave: "1" }
 spec:
   project: default
-  sources:
-    - repoURL: https://helm.phase.dev
-      chart: phase
-      targetRevision: "*" # pin the exact version once it runs
-      helm:
-        releaseName: phase-console
-        valuesObject:
-          global:
-            host: phase.k3s.home.klrnbk.nl
-            version: "latest" # pin a tag from https://github.com/phasehq/console/releases
-          phaseSecrets: phase-console-secret
-          ingress: { enabled: false }
-          certManager: { enabled: false }
-          database:
-            external: true # use CNPG, not the chart's own Postgres
-            host: phase-db-rw
-            port: "5432"
-            name: phase
-            user: phase
-            sslmode: prefer
-          redis:
-            external: true # use redis.yaml, not the chart's own Redis
-            host: redis
-            port: "6379"
-    - repoURL: git@github.com:ijskoud/homelab-gitops.git
-      targetRevision: main
-      path: infrastructure/phase
+  source:
+    repoURL: https://helm.phase.dev
+    chart: phase
+    targetRevision: "*" # pin the exact version once it runs
+    helm:
+      releaseName: phase-console
+      valuesObject:
+        global:
+          host: phase.k3s.home.klrnbk.nl
+          version: "latest" # pin a tag from https://github.com/phasehq/console/releases
+        phaseSecrets: phase-console-secret
+        ingress: { enabled: false }
+        certManager: { enabled: false }
+        database:
+          external: true # use CNPG, not the chart's own Postgres
+          host: phase-db-rw
+          port: "5432"
+          name: phase
+          user: phase
+          sslmode: prefer
+        redis:
+          external: true # use redis.yaml, not the chart's own Redis
+          host: redis
+          port: "6379"
   destination: { server: https://kubernetes.default.svc, namespace: phase }
   syncPolicy:
     automated: { prune: true, selfHeal: true }

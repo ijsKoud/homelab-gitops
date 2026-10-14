@@ -1,0 +1,16 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: phase-deps
+  namespace: argocd
+  annotations: { argocd.argoproj.io/sync-wave: "0" }
+spec:
+  project: default
+  source:
+    repoURL: git@github.com:ijskoud/homelab-gitops.git
+    targetRevision: main
+    path: infrastructure/phase
+  destination: { server: https://kubernetes.default.svc, namespace: phase }
+  syncPolicy:
+    automated: { prune: true, selfHeal: true }
+    syncOptions: [CreateNamespace=true, ServerSideApply=true]
