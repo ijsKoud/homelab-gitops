@@ -10,7 +10,7 @@ spec:
   sources:
     - repoURL: https://argoproj.github.io/argo-helm
       chart: argo-cd
-      targetRevision: 9.x.y            # the exact version helm list showed
+      targetRevision: 10.10.3
       helm: { valueFiles: [$values/argocd/values.yaml] }
     - repoURL: git@github.com:ijskoud/homelab-gitops.git
       targetRevision: main
