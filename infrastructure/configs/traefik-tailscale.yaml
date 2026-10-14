@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: traefik-tailscale
+  namespace: traefik
+  annotations:
+    tailscale.com/hostname: k3s-apps
+spec:
+  type: LoadBalancer
+  loadBalancerClass: tailscale
+  selector:
+    app.kubernetes.io/name: traefik
+  ports:
+    - { name: websecure, port: 443, targetPort: websecure }
+    - { name: web, port: 80, targetPort: web }
