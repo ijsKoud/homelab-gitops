@@ -1,1 +1,8 @@
-resources: [wildcard-cert.yaml, traefik-tailscale.yaml, nfs-storageclass.yaml]
+resources:
+  [
+    wildcard-cert.yaml,
+    traefik-tailscale.yaml,
+    nfs-storageclass.yaml,
+    longhorn-backup-job.yaml,
+    longhorn-ingress.yaml,
+  ]

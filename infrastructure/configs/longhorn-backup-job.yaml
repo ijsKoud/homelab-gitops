@@ -1,0 +1,9 @@
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata: { name: nightly-backup, namespace: longhorn-system }
+spec:
+  task: backup
+  cron: "0 2 * * *" # 02:00, before the 03:00 database backups and 04:00 restic
+  retain: 7
+  concurrency: 2
+  groups: [default] # "default" = every volume that has no other job assigned
