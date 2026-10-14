@@ -1,0 +1,17 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata: { name: wildcard-home, namespace: traefik }
+spec:
+  secretName: wildcard-home-tls
+  dnsNames:
+    - "home.klrnbk.nl"
+    - "*.home.klrnbk.nl"
+    - "*.k3s.home.klrnbk.nl"
+    - "auth.klrnbk.nl"
+  issuerRef: { name: letsencrypt, kind: ClusterIssuer }
+---
+apiVersion: traefik.io/v1alpha1
+kind: TLSStore
+metadata: { name: default, namespace: traefik }
+spec:
+  defaultCertificate: { secretName: wildcard-home-tls }
