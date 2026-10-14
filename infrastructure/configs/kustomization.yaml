@@ -1,1 +1,1 @@
-resources: [wildcard-cert.yaml]
+resources: [wildcard-cert.yaml, traefik-tailscale.yaml]
