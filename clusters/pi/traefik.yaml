@@ -20,10 +20,10 @@ spec:
           type: LoadBalancer
           annotations:
             metallb.io/loadBalancerIPs: 192.168.2.20
-        ports:
-          web:
-            redirections:
-              entryPoint: { to: websecure, scheme: https, permanent: true }
+        additionalArguments:
+        - "--entryPoints.web.http.redirections.entryPoint.to=websecure"
+        - "--entryPoints.web.http.redirections.entryPoint.scheme=https"
+        - "--entryPoints.web.http.redirections.entryPoint.permanent=true"
   destination: { server: https://kubernetes.default.svc, namespace: traefik }
   syncPolicy:
     automated: { prune: true, selfHeal: true }
