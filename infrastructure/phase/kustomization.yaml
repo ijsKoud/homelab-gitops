@@ -1,1 +1,1 @@
-resources: []
+resources: [postgres.yaml, redis.yaml, ingressroute.yaml]

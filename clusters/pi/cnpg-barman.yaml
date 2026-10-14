@@ -1,0 +1,16 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cnpg-barman
+  namespace: argocd
+  annotations: { argocd.argoproj.io/sync-wave: "-1" } # after cert-manager and the operator
+spec:
+  project: default
+  source:
+    repoURL: https://cloudnative-pg.github.io/charts
+    chart: plugin-barman-cloud
+    targetRevision: "0.*"
+  destination: { server: https://kubernetes.default.svc, namespace: cnpg-system } # must be the operator's namespace
+  syncPolicy:
+    automated: { prune: true, selfHeal: true }
+    syncOptions: [CreateNamespace=true, ServerSideApply=true]

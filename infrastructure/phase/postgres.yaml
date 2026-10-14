@@ -1,0 +1,35 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata: { name: phase-db, namespace: phase }
+spec:
+  instances: 2
+  storage: { size: 5Gi, storageClass: local-path }
+  bootstrap:
+    initdb: { database: phase, owner: phase, secret: { name: phase-db-credentials } }
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters: { barmanObjectName: phase-s3 }
+---
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata: { name: phase-s3, namespace: phase }
+spec:
+  retentionPolicy: "30d"
+  configuration:
+    destinationPath: s3://cnpg-backups/phase
+    endpointURL: http://192.168.2.104:3900
+    s3Credentials:
+      accessKeyId: { name: phase-s3-creds, key: ACCESS_KEY_ID }
+      secretAccessKey: { name: phase-s3-creds, key: ACCESS_SECRET_KEY }
+      region: { name: phase-s3-creds, key: REGION }
+    wal: { compression: gzip }
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata: { name: phase-db-nightly, namespace: phase }
+spec:
+  schedule: "0 0 3 * * *"
+  cluster: { name: phase-db }
+  method: plugin
+  pluginConfiguration: { name: barman-cloud.cloudnative-pg.io }

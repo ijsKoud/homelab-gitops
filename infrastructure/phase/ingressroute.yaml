@@ -1,0 +1,20 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata: { name: strip-service, namespace: phase }
+spec:
+  stripPrefix: { prefixes: [/service] }
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata: { name: phase, namespace: phase }
+spec:
+  entryPoints: [websecure]
+  routes:
+    - match: Host(`phase.k3s.home.klrnbk.nl`) && PathPrefix(`/service`)
+      kind: Rule
+      middlewares: [{ name: strip-service }]
+      services: [{ name: phase-console-backend, port: 8000 }]
+    - match: Host(`phase.k3s.home.klrnbk.nl`)
+      kind: Rule
+      services: [{ name: phase-console-frontend, port: 3000 }]
+  tls: {}
