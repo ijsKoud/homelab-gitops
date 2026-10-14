@@ -13,6 +13,9 @@ spec:
     helm:
       valuesObject:
         crds: { enabled: true }
+        extraArgs:
+          - --dns01-recursive-nameservers-only
+          - --dns01-recursive-nameservers=1.1.1.1:53,9.9.9.9:53
   destination: { server: https://kubernetes.default.svc, namespace: cert-manager }
   syncPolicy:
     automated: { prune: true, selfHeal: true }
