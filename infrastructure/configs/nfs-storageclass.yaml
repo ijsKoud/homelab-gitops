@@ -4,7 +4,7 @@ metadata: { name: nfs-nas }
 provisioner: nfs.csi.k8s.io
 parameters:
   server: 192.168.2.104
-  share: /volume1/k3s
+  share: /volume1/k3s/storage
 reclaimPolicy: Retain # deleting a PVC never deletes data on the NAS
 volumeBindingMode: Immediate
 mountOptions: [nfsvers=4.1]
