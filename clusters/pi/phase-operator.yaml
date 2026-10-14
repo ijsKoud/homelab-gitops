@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: phase-operator
+  namespace: argocd
+  annotations: { argocd.argoproj.io/sync-wave: "-2" }
+spec:
+  project: default
+  source:
+    repoURL: https://helm.phase.dev
+    chart: phase-kubernetes-operator
+    targetRevision: "*"
+    helm:
+      valuesObject:
+        image: { tag: v2.0.1 }
+  destination: { server: https://kubernetes.default.svc, namespace: phase-system }
+  syncPolicy:
+    automated: { prune: true, selfHeal: true }
+    syncOptions: [CreateNamespace=true, ServerSideApply=true]
