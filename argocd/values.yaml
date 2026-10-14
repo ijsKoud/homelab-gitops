@@ -14,3 +14,9 @@ configs:
         end
       end
       return hs
+
+server:
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    hostname: argocd.k3s.home.klrnbk.nl
