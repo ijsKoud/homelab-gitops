@@ -1,1 +1,1 @@
-resources: []
+resources: [wildcard-cert.yaml]
