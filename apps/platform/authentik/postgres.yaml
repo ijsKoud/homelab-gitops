@@ -1,0 +1,35 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata: { name: authentik-db, namespace: platform }
+spec:
+  instances: 2
+  storage: { size: 5Gi, storageClass: local-path }
+  bootstrap:
+    initdb: { database: authentik, owner: authentik }
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters: { barmanObjectName: authentik-s3 }
+---
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata: { name: authentik-s3, namespace: platform }
+spec:
+  retentionPolicy: "30d"
+  configuration:
+    destinationPath: s3://cnpg-backups/authentik
+    endpointURL: http://192.168.2.104:3900
+    s3Credentials:
+      accessKeyId: { name: authentik-s3-creds, key: ACCESS_KEY_ID }
+      secretAccessKey: { name: authentik-s3-creds, key: ACCESS_SECRET_KEY }
+      region: { name: authentik-s3-creds, key: REGION }
+    wal: { compression: gzip }
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata: { name: authentik-db-nightly, namespace: platform }
+spec:
+  schedule: "0 0 3 * * *"
+  cluster: { name: authentik-db }
+  method: plugin
+  pluginConfiguration: { name: barman-cloud.cloudnative-pg.io }
