@@ -17,7 +17,7 @@ configs:
     url: https://argocd.k3s.home.klrnbk.nl
     oidc.config: |
       name: KLRNBK
-      issuer: https://auth.klrnbk.nl/application/o/argo-cd/
+      issuer: https://auth.home.klrnbk.nl/application/o/argo-cd/
       clientID: NuIeSl6lCx1MGnjDYbgbY9VS8QFERSeWD7486TZe
       clientSecret: $oidc.authentik.clientSecret
       requestedScopes: [openid, profile, email]
