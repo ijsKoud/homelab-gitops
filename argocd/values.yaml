@@ -1,6 +1,6 @@
 configs:
   params:
-    server.insecure: true            # Traefik terminates TLS in front of it
+    server.insecure: true # Traefik terminates TLS in front of it
   cm:
     # Let the root app wait until each child Application is Healthy (makes sync waves work)
     resource.customizations.health.argoproj.io_Application: |
@@ -14,6 +14,21 @@ configs:
         end
       end
       return hs
+    url: https://argocd.k3s.home.klrnbk.nl
+    oidc.config: |
+      name: KLRNBK
+      issuer: https://auth.klrnbk.nl/application/o/argo-cd/
+      clientID: NuIeSl6lCx1MGnjDYbgbY9VS8QFERSeWD7486TZe
+      clientSecret: $oidc.authentik.clientSecret
+      requestedScopes: [openid, profile, email]
+  rbac:
+    policy.csv: |
+      p, role:user, applications, get, */*, allow
+      p, role:user, applications, sync, */*, allow
+      p, role:user, applications, action/apps/Deployment/restart, */*, allow
+      p, role:user, logs, get, */*, allow
+      g, Deployment / ArgoCD / Admin, role:admin
+      g, Deployment / ArgoCD / Default, role:user
 
 server:
   ingress:
