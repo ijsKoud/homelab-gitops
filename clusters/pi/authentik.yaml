@@ -10,52 +10,52 @@ spec:
     - repoURL: git@github.com:ijskoud/homelab-gitops.git
       targetRevision: main
       path: apps/platform/authentik
-    # - repoURL: https://charts.goauthentik.io
-    #   chart: authentik
-    #   targetRevision: "2026.8"
-    #   helm:
-    #     valuesObject:
-    #       authentik:
-    #         postgresql:
-    #           host: authentik-db-rw
-    #           name: authentik
-    #           user: authentik
-    #           port: 5432
-    #         email:
-    #           host: smtp.forwardemail.net
-    #           port: 465
-    #           use_tls: false
-    #           use_ssl: true
-    #           timeout: 10
-    #           from: "noreply@auth.klrnbk.nl"
-    #       global:
-    #         env:
-    #           - name: AUTHENTIK_SECRET_KEY
-    #             valueFrom: { secretKeyRef: { name: authentik-secret, key: AUTHENTIK_SECRET_KEY } }
-    #           - name: AUTHENTIK_POSTGRESQL__PASSWORD
-    #             valueFrom: { secretKeyRef: { name: authentik-db-app, key: password } }
-    #           - name: AUTHENTIK_EMAIL__USERNAME
-    #             valueFrom:
-    #               { secretKeyRef: { name: authentik-secret, key: AUTHENTIK_EMAIL__USERNAME } }
-    #           - name: AUTHENTIK_EMAIL__PASSWORD
-    #             valueFrom:
-    #               { secretKeyRef: { name: authentik-secret, key: AUTHENTIK_EMAIL__PASSWORD } }
-    #         volumes:
-    #           - name: data
-    #             persistentVolumeClaim: { claimName: authentik-data }
-    #         volumeMounts:
-    #           - name: data
-    #             mountPath: /data
-    #       postgresql:
-    #         enabled: false # we use CNPG instead of the bundled chart
-    #       server:
-    #         replicas: 2
-    #         ingress:
-    #           enabled: true
-    #           ingressClassName: traefik
-    #           hosts:
-    #             - auth.home.klrnbk.nl
-    #             - auth.k3s.home.klrnbk.nl
+    - repoURL: https://charts.goauthentik.io
+      chart: authentik
+      targetRevision: "2026.8"
+      helm:
+        valuesObject:
+          authentik:
+            postgresql:
+              host: authentik-db-rw
+              name: authentik
+              user: authentik
+              port: 5432
+            email:
+              host: smtp.forwardemail.net
+              port: 465
+              use_tls: false
+              use_ssl: true
+              timeout: 10
+              from: "noreply@auth.klrnbk.nl"
+          global:
+            env:
+              - name: AUTHENTIK_SECRET_KEY
+                valueFrom: { secretKeyRef: { name: authentik-secret, key: AUTHENTIK_SECRET_KEY } }
+              - name: AUTHENTIK_POSTGRESQL__PASSWORD
+                valueFrom: { secretKeyRef: { name: authentik-db-app, key: password } }
+              - name: AUTHENTIK_EMAIL__USERNAME
+                valueFrom:
+                  { secretKeyRef: { name: authentik-secret, key: AUTHENTIK_EMAIL__USERNAME } }
+              - name: AUTHENTIK_EMAIL__PASSWORD
+                valueFrom:
+                  { secretKeyRef: { name: authentik-secret, key: AUTHENTIK_EMAIL__PASSWORD } }
+            volumes:
+              - name: data
+                persistentVolumeClaim: { claimName: authentik-data }
+            volumeMounts:
+              - name: data
+                mountPath: /data
+          postgresql:
+            enabled: false # we use CNPG instead of the bundled chart
+          server:
+            replicas: 2
+            ingress:
+              enabled: true
+              ingressClassName: traefik
+              hosts:
+                - auth.home.klrnbk.nl
+                - auth.k3s.home.klrnbk.nl
   destination: { server: https://kubernetes.default.svc, namespace: platform }
   syncPolicy:
     automated: { prune: true, selfHeal: true }
