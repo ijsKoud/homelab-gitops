@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata: { name: convertx-data, namespace: media }
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: longhorn
+  resources: { requests: { storage: 10Gi } }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: convertx, namespace: media }
+spec:
+  replicas: 1
+  strategy: { type: Recreate }
+  selector: { matchLabels: { app: convertx } }
+  template:
+    metadata: { labels: { app: convertx } }
+    spec:
+      containers:
+        - name: convertx
+          image: ghcr.io/c4illin/convertx:v0.17.0
+          ports: [{ containerPort: 3000 }]
+          envFrom: [{ secretRef: { name: convertx-env } }]
+          resources:
+            requests: { cpu: 250m, memory: 512Mi }
+            limits: { memory: 4Gi } # video conversions with FFmpeg are heavy
+          volumeMounts: [{ name: data, mountPath: /app/data }]
+      volumes:
+        - name: data
+          persistentVolumeClaim: { claimName: convertx-data }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: convertx, namespace: media }
+spec:
+  selector: { app: convertx }
+  ports: [{ port: 80, targetPort: 3000 }]
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata: { name: convertx, namespace: media }
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: convert.k3s.home.klrnbk.nl
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: convertx, port: { number: 80 } } }
