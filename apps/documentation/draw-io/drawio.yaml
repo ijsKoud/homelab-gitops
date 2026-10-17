@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: drawio, namespace: documentation }
+spec:
+  replicas: 2
+  selector: { matchLabels: { app: drawio } }
+  template:
+    metadata: { labels: { app: drawio } }
+    spec:
+      containers:
+        - name: drawio
+          image: jgraph/drawio:32.3.0
+          ports: [{ containerPort: 8080 }]
+          resources:
+            requests: { cpu: 100m, memory: 384Mi }
+            limits: { memory: 1Gi }
+          readinessProbe:
+            httpGet: { path: /, port: 8080 }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: drawio, namespace: documentation }
+spec:
+  selector: { app: drawio }
+  ports: [{ port: 80, targetPort: 8080 }]
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: drawio
+  namespace: documentation
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: draw.k3s.home.klrnbk.nl
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: drawio, port: { number: 80 } } }
