@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata: { name: outline-data, namespace: documentation }
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: longhorn
+  resources: { requests: { storage: 10Gi } }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: outline, namespace: documentation }
+spec:
+  replicas: 1 # local file storage on a RWO volume = 1 replica
+  strategy: { type: Recreate }
+  selector: { matchLabels: { app: outline } }
+  template:
+    metadata: { labels: { app: outline } }
+    spec:
+      securityContext: { fsGroup: 1001 }
+      containers:
+        - name: outline
+          image: outlinewiki/outline:1.11.0
+          ports: [{ containerPort: 3000 }]
+          envFrom: [{ secretRef: { name: outline-env } }]
+          env:
+            - name: DATABASE_URL
+              valueFrom: { secretKeyRef: { name: outline-db-app, key: uri } }
+            - { name: FILE_STORAGE, value: local }
+            - { name: FILE_STORAGE_LOCAL_ROOT_DIR, value: /var/lib/outline/data }
+          volumeMounts: [{ name: data, mountPath: /var/lib/outline/data }]
+      volumes:
+        - name: data
+          persistentVolumeClaim: { claimName: outline-data }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: outline, namespace: documentation }
+spec:
+  selector: { app: outline }
+  ports: [{ port: 80, targetPort: 3000 }]
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata: { name: outline, namespace: documentation }
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: outline.k3s.home.klrnbk.nl
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: outline, port: { number: 80 } } }

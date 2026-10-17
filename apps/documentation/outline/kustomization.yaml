@@ -1,0 +1,4 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  [postgres.yaml, phase-secret-outline.yaml, phase-secret-s3.yaml, outline.yaml, redis.yaml]
