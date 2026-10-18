@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: convertx
-          image: ghcr.io/c4illin/convertx:v0.17.0
+          image: ghcr.io/c4illin/convertx:v0.19.0
           ports: [{ containerPort: 3000 }]
           envFrom: [{ secretRef: { name: convertx-env } }]
           resources:
