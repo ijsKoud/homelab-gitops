@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: withoutbg, namespace: media }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: withoutbg } }
+  template:
+    metadata: { labels: { app: withoutbg } }
+    spec:
+      containers:
+        - name: withoutbg
+          image: withoutbg/withoutbg-openweights-v3-app-cpu:latest
+          ports: [{ containerPort: 8080 }]
+          resources:
+            requests: { cpu: "1", memory: 1Gi }
+            limits: { memory: 4Gi }
+          readinessProbe:
+            httpGet: { path: /health, port: 8080 }
+            initialDelaySeconds: 20
+---
+apiVersion: v1
+kind: Service
+metadata: { name: withoutbg, namespace: media }
+spec:
+  selector: { app: withoutbg }
+  ports: [{ port: 80, targetPort: 8080 }]
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: withoutbg
+  namespace: media
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: removebg.k3s.home.klrnbk.nl
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: withoutbg, port: { number: 80 } } }
