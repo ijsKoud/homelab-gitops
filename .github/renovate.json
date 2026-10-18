@@ -1,0 +1,6 @@
+{
+	"extends": ["config:recommended"],
+	"argocd": { "managerFilePatterns": ["/clusters/pi/.+\\.yaml$/"] },
+	"kubernetes": { "managerFilePatterns": ["/(apps|infrastructure)/.+\\.yaml$/"] },
+	"packageRules": [{ "matchPackageNames": ["ghcr.io/ijskoud/**"], "enabled": false }]
+}
