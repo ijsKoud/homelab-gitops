@@ -8,6 +8,7 @@ spec:
     initdb: { database: outline, owner: outline }
   plugins:
     - name: barman-cloud.cloudnative-pg.io
+      enabled: true
       isWALArchiver: true
       parameters: { barmanObjectName: outline-s3 }
 ---

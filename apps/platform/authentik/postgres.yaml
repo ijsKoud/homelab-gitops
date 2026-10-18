@@ -8,6 +8,7 @@ spec:
     initdb: { database: authentik, owner: authentik }
   plugins:
     - name: barman-cloud.cloudnative-pg.io
+      enabled: true
       isWALArchiver: true
       parameters: { barmanObjectName: authentik-s3 }
 ---
