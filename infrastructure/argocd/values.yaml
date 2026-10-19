@@ -2,6 +2,7 @@ configs:
   params:
     server.insecure: true # Traefik terminates TLS in front of it
   cm:
+    timeout.reconciliation: 60s # poll Git every minute instead of every 3
     # Let the root app wait until each child Application is Healthy (makes sync waves work)
     resource.customizations.health.argoproj.io_Application: |
       hs = {}
