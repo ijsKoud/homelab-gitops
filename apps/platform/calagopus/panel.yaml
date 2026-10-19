@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
         - name: panel
-          image: ghcr.io/calagopus/panel:<version you run now> # Renovate bumps it
+          image: ghcr.io/calagopus/panel:1.2.5
           ports: [{ containerPort: 8000 }]
           envFrom: [{ secretRef: { name: calagopus-env } }]
           env:

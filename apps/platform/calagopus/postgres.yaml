@@ -3,6 +3,7 @@ kind: Cluster
 metadata: { name: calagopus-db, namespace: platform }
 spec:
   instances: 2
+  imageName: ghcr.io/cloudnative-pg/postgresql:18
   storage: { size: 5Gi, storageClass: local-path }
   bootstrap:
     initdb: { database: calagopus, owner: calagopus }
