@@ -28,7 +28,7 @@ spec:
             - { name: DOMAIN, value: https://vault.klrnbk.nl }
             - name: DATABASE_URL
               valueFrom: { secretKeyRef: { name: vaultwarden-db-app, key: uri } }
-            - { name: SIGNUPS_ALLOWED, value: "false" }
+            - { name: SIGNUPS_ALLOWED, value: "true" }
             - { name: SSO_ENABLED, value: "true" }
             - { name: SSO_ONLY, value: "false" }
             - { name: SSO_SIGNUPS_MATCH_EMAIL, value: "true" }
