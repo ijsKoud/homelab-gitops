@@ -13,7 +13,7 @@ metadata:
   namespace: platform
   annotations: { reloader.stakater.com/auto: "true" }
 spec:
-  replicas: 0
+  replicas: 1
   strategy: { type: Recreate }
   selector: { matchLabels: { app: calagopus } }
   template:
