@@ -3,7 +3,7 @@ kind: Middleware
 metadata: { name: forward-auth, namespace: platform }
 spec:
   forwardAuth:
-    address: http://authentik-server.platform.svc.cluster.local/outpost.goauthentik.io/auth/treaefik
+    address: http://authentik-server.platform.svc.cluster.local/outpost.goauthentik.io/auth/traefik
     trustForwardHeader: true
     authResponseHeaders:
       - X-authentik-username
