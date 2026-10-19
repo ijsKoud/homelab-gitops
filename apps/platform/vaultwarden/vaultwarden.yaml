@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata: { name: vaultwarden-data, namespace: platform }
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: longhorn
+  resources: { requests: { storage: 10Gi } } # attachments, icon cache, signing key
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vaultwarden
+  namespace: platform
+  annotations: { reloader.stakater.com/auto: "true" }
+spec:
+  replicas: 1
+  strategy: { type: Recreate }
+  selector: { matchLabels: { app: vaultwarden } }
+  template:
+    metadata: { labels: { app: vaultwarden } }
+    spec:
+      containers:
+        - name: vaultwarden
+          image: vaultwarden/server:1.37.4
+          ports: [{ containerPort: 80 }]
+          envFrom: [{ secretRef: { name: vaultwarden-env } }]
+          env:
+            - { name: DOMAIN, value: https://vault.klrnbk.nl }
+            - name: DATABASE_URL
+              valueFrom: { secretKeyRef: { name: vaultwarden-db-app, key: uri } }
+            - { name: SIGNUPS_ALLOWED, value: "false" }
+            - { name: SSO_ENABLED, value: "true" }
+            - { name: SSO_ONLY, value: "false" }
+            - { name: SSO_SIGNUPS_MATCH_EMAIL, value: "true" }
+            - { name: SSO_AUTHORITY, value: https://auth.home.klrnbk.nl/application/o/vaultwarden/ }
+            - { name: SSO_SCOPES, value: "email profile offline_access" }
+          volumeMounts: [{ name: data, mountPath: /data }]
+          readinessProbe:
+            httpGet: { path: /alive, port: 80 }
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+            limits: { memory: 512Mi }
+      volumes:
+        - name: data
+          persistentVolumeClaim: { claimName: vaultwarden-data }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: vaultwarden, namespace: platform }
+spec:
+  selector: { app: vaultwarden }
+  ports: [{ port: 80, targetPort: 80 }]
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata: { name: vaultwarden, namespace: platform }
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: vault.klrnbk.nl
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: vaultwarden, port: { number: 80 } } }

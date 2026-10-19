@@ -1,0 +1,1 @@
+resources: [postgres.yaml, phase-secret-vaultwarden.yaml, phase-secret-s3.yaml, vaultwarden.yaml]
