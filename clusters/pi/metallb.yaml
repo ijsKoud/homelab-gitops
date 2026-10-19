@@ -10,9 +10,9 @@ spec:
   source:
     repoURL: https://metallb.github.io/metallb
     chart: metallb
-    targetRevision: 0.15.*
+    targetRevision: 0.16.1
     helm:
-      valuesObject: {}          # chart values go here
+      valuesObject: {}
   destination: { server: https://kubernetes.default.svc, namespace: metallb-system }
   syncPolicy:
     automated: { prune: true, selfHeal: true }   # apply Git automatically, undo manual changes
