@@ -4,7 +4,7 @@ metadata:
   name: longhorn
   namespace: longhorn-system
   annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: longhorn-system-forward-auth@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: authentik-forward-auth@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
@@ -14,15 +14,3 @@ spec:
           - path: /
             pathType: Prefix
             backend: { service: { name: longhorn-frontend, port: { number: 80 } } }
----
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata: { name: forward-auth, namespace: longhorn-system }
-spec:
-  forwardAuth:
-    address: http://authentik-server.platform.svc.cluster.local/outpost.goauthentik.io/auth/longhorn
-    trustForwardHeader: true
-    authResponseHeaders:
-      - X-authentik-username
-      - X-authentik-groups
-      - X-authentik-email
