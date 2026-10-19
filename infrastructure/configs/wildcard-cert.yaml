@@ -8,6 +8,7 @@ spec:
     - "*.home.klrnbk.nl"
     - "*.k3s.home.klrnbk.nl"
     - "auth.klrnbk.nl"
+    - "vault.klrnbk.nl"
   issuerRef: { name: letsencrypt, kind: ClusterIssuer }
 ---
 apiVersion: traefik.io/v1alpha1
