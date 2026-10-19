@@ -4,7 +4,7 @@ metadata:
   name: longhorn
   namespace: longhorn-system
   annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: authentik-forward-auth@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: platform-forward-auth@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
