@@ -9,7 +9,7 @@ spec:
   source:
     repoURL: https://traefik.github.io/charts
     chart: traefik
-    targetRevision: 41.*
+    targetRevision: 42.*
     helm:
       valuesObject:
         deployment: { replicas: 2 }
