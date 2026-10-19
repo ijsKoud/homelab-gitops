@@ -1,0 +1,64 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata: { name: calagopus-data, namespace: platform }
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: longhorn
+  resources: { requests: { storage: 5Gi } }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: calagopus
+  namespace: platform
+  annotations: { reloader.stakater.com/auto: "true" }
+spec:
+  replicas: 1
+  strategy: { type: Recreate }
+  selector: { matchLabels: { app: calagopus } }
+  template:
+    metadata: { labels: { app: calagopus } }
+    spec:
+      containers:
+        - name: panel
+          image: ghcr.io/calagopus/panel:1.2.5
+          ports: [{ containerPort: 8000 }]
+          envFrom: [{ secretRef: { name: calagopus-env } }]
+          env:
+            - name: DATABASE_URL
+              valueFrom: { secretKeyRef: { name: calagopus-db-app, key: uri } }
+            - { name: REDIS_URL, value: redis://valkey:6379 }
+            - { name: DATABASE_MIGRATE, value: "true" }
+            - { name: PORT, value: "8000" }
+            - { name: TZ, value: Europe/Amsterdam }
+            - { name: APP_PRIMARY, value: "true" }
+            - { name: APP_ENABLE_WINGS_PROXY, value: "true" }
+            - { name: APP_LOG_DIRECTORY, value: /var/log/calagopus }
+          volumeMounts:
+            - { name: data, mountPath: /var/lib/calagopus }
+            - { name: logs, mountPath: /var/log/calagopus }
+      volumes:
+        - name: data
+          persistentVolumeClaim: { claimName: calagopus-data }
+        - name: logs
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata: { name: calagopus, namespace: platform }
+spec:
+  selector: { app: calagopus }
+  ports: [{ port: 80, targetPort: 8000 }]
+# ---
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata: { name: calagopus, namespace: platform }
+# spec:
+#   ingressClassName: traefik
+#   rules:
+#     - host: panel.k3s.home.klrnbk.nl
+#       http:
+#         paths:
+#           - path: /
+#             pathType: Prefix
+#             backend: { service: { name: calagopus, port: { number: 80 } } }
