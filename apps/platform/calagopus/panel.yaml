@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
         - name: panel
-          image: ghcr.io/calagopus/panel:1.2.5
+          image: ghcr.io/calagopus/panel:1.2.6
           ports: [{ containerPort: 8000 }]
           envFrom: [{ secretRef: { name: calagopus-env } }]
           env:
