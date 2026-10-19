@@ -1,12 +1,12 @@
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
-  name: { { .Values.name } }
+  name: {{ .Values.name }}
   namespace: argocd
 spec:
-  description: { { .Values.description | default .Values.name | quote } }
-  sourceRepos: { { - toYaml .Values.sourceRepos | nindent 4 } }
+  description: {{ .Values.description | default .Values.name | quote }}
+  sourceRepos: {{- toYaml .Values.sourceRepos | nindent 4 }}
   destinations:
     - server: https://kubernetes.default.svc
-      namespace: { { .Values.name } }
-  clusterResourceWhitelist: { { - toYaml .Values.clusterResourceWhitelist | nindent 4 } }
+      namespace: {{ .Values.name }}
+  clusterResourceWhitelist: {{- toYaml .Values.clusterResourceWhitelist | nindent 4 }}

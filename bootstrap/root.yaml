@@ -9,6 +9,7 @@ spec:
     repoURL: git@github.com:ijskoud/homelab-gitops.git
     targetRevision: main
     path: clusters/pi
+    directory: { recurse: true } # Applications are grouped in subfolders (core/, storage/, ...)
   destination: { server: https://kubernetes.default.svc, namespace: argocd }
   syncPolicy:
     automated: { prune: true, selfHeal: true }

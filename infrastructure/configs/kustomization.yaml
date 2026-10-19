@@ -1,5 +1,6 @@
 resources:
   [
+    cluster-issuer.yaml,
     wildcard-cert.yaml,
     traefik-tailscale.yaml,
     nfs-storageclass.yaml,

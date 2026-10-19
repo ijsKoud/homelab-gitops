@@ -1,0 +1,2 @@
+# Helm templates are not valid YAML until rendered; Prettier breaks the {{ }} syntax
+charts/**/templates/**
