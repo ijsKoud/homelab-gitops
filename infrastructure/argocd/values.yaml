@@ -16,6 +16,7 @@ configs:
       end
       return hs
     url: https://argocd.k3s.home.klrnbk.nl
+    accounts.ci: apiKey
     oidc.config: |
       name: KLRNBK
       issuer: https://auth.home.klrnbk.nl/application/o/argo-cd/
@@ -28,8 +29,12 @@ configs:
       p, role:user, applications, sync, */*, allow
       p, role:user, applications, action/apps/Deployment/restart, */*, allow
       p, role:user, logs, get, */*, allow
+      p, role:ci, applications, get, */*, allow
+      p, role:ci, applications, sync, */*, allow
+
       g, Deployment / ArgoCD / Admin, role:admin
       g, Deployment / ArgoCD / Default, role:user
+      g, ci, role:ci
 
 server:
   ingress:
