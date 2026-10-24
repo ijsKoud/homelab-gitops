@@ -9,7 +9,7 @@ spec:
   source:
     repoURL: https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts
     chart: csi-driver-nfs
-    targetRevision: v4.13.5
+    targetRevision: 4.13.6
   destination: { server: https://kubernetes.default.svc, namespace: kube-system }
   syncPolicy:
     automated: { prune: true, selfHeal: true }
