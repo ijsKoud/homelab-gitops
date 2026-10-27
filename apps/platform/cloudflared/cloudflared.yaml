@@ -18,7 +18,7 @@ spec:
           labelSelector: { matchLabels: { app: cloudflared } }
       containers:
         - name: cloudflared
-          image: cloudflare/cloudflared:2026.10.4
+          image: cloudflare/cloudflared:2026.10.5
           args: [tunnel, --no-autoupdate, --metrics, 0.0.0.0:2000, run]
           env:
             - name: TUNNEL_TOKEN
