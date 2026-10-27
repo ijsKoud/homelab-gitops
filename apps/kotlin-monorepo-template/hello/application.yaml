@@ -9,7 +9,7 @@ spec:
     spec:
       containers:
         - name: hello
-          image: ghcr.io/ijskoud/kotlin-monorepo-template-hello:0.1.0@sha256:75cdca558bafce6ec2f50d9d5ae8e0c02efd899774a840f529a7935522af8d70
+          image: ghcr.io/ijskoud/kotlin-monorepo-template-hello:0.1.1@sha256:b3e3d0e137c8f9c9f97db088ccc6438b9e9feda94d4128d8226caa6db7fb3653
           ports: [{ containerPort: 8080 }]
           startupProbe: # the JVM is slow to start on a Pi
             httpGet: { path: /actuator/health/liveness, port: 8080 }
