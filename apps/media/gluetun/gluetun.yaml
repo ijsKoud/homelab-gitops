@@ -1,0 +1,63 @@
+# VPN egress for Prowlarr: Gluetun's HTTP proxy (8888) and FlareSolverr (8191) share one
+# network namespace, so all indexer traffic and its DNS leave through NordVPN. If the tunnel
+# drops, Gluetun's firewall blocks everything instead of falling back to your home IP.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gluetun
+  namespace: media
+  annotations: { reloader.stakater.com/auto: "true" }
+spec:
+  replicas: 1
+  strategy: { type: Recreate } # two Gluetuns fighting over IP rules breaks both
+  selector: { matchLabels: { app: gluetun } }
+  template:
+    metadata: { labels: { app: gluetun } }
+    spec:
+      dnsPolicy: None # all lookups go to Gluetun's DNS (DoT through the tunnel), never to CoreDNS/your ISP
+      dnsConfig: { nameservers: [127.0.0.1] }
+      containers:
+        - name: gluetun
+          image: qmcgaw/gluetun:v3.41.3
+          securityContext:
+            capabilities: { add: [NET_ADMIN] }
+          envFrom: [{ secretRef: { name: gluetun-env } }] # WIREGUARD_PRIVATE_KEY, HTTPPROXY_USER, HTTPPROXY_PASSWORD
+          env:
+            - { name: VPN_SERVICE_PROVIDER, value: nordvpn }
+            - { name: VPN_TYPE, value: wireguard }
+            - { name: SERVER_COUNTRIES, value: "Switzerland,Sweden" }
+            - { name: TZ, value: Europe/Amsterdam }
+            - { name: HTTPPROXY, value: "on" }
+            - { name: HTTPPROXY_LISTENING_ADDRESS, value: ":8888" }
+            - { name: HTTPPROXY_STEALTH, value: "on" } # don't tell the indexer a proxy is used
+            - { name: FIREWALL_INPUT_PORTS, value: "8888,8191" } # let other pods reach the proxy and FlareSolverr
+            - { name: FIREWALL_OUTBOUND_SUBNETS, value: "10.42.0.0/16" } # replies to pods leave via eth0, not the tunnel
+          lifecycle:
+            postStart: # clean up IP rules left by an unclean exit (gluetun wiki, Kubernetes page)
+              exec:
+                command: ["/bin/sh", "-c", "(ip rule del table 51820; ip -6 rule del table 51820) || true"]
+          livenessProbe:
+            exec: { command: [/gluetun-entrypoint, healthcheck] }
+            initialDelaySeconds: 30
+            periodSeconds: 60
+          resources:
+            requests: { cpu: 50m, memory: 64Mi }
+            limits: { memory: 256Mi }
+        - name: flaresolverr
+          image: ghcr.io/flaresolverr/flaresolverr:v3.5.2
+          ports: [{ containerPort: 8191 }]
+          env:
+            - { name: TZ, value: Europe/Amsterdam }
+            - { name: LOG_LEVEL, value: info }
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits: { memory: 1Gi } # headless Chromium
+---
+apiVersion: v1
+kind: Service
+metadata: { name: gluetun, namespace: media }
+spec:
+  selector: { app: gluetun }
+  ports:
+    - { name: http-proxy, port: 8888, targetPort: 8888 }
+    - { name: flaresolverr, port: 8191, targetPort: 8191 }

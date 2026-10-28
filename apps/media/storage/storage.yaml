@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata: { name: media-nfs }
+spec:
+  capacity: { storage: 10Ti }
+  accessModes: [ReadWriteMany]
+  persistentVolumeReclaimPolicy: Retain
+  mountOptions: [nfsvers=3]
+  csi:
+    driver: nfs.csi.k8s.io
+    volumeHandle: nas-media
+    volumeAttributes: { server: 192.168.2.104, share: /volume1/media }
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata: { name: media, namespace: media }
+spec:
+  accessModes: [ReadWriteMany]
+  storageClassName: ""
+  volumeName: media-nfs
+  resources: { requests: { storage: 10Ti } }
