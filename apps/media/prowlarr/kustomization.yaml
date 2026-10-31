@@ -1,0 +1,1 @@
+resources: [prowlarr.yaml, phase-secret-prowlarr.yaml]

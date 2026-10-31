@@ -1,0 +1,1 @@
+resources: [sonarr.yaml, phase-secret-sonarr.yaml]

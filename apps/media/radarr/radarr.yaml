@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata: { name: radarr-config, namespace: media }
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: longhorn
+  resources: { requests: { storage: 5Gi } } # SQLite + MediaCover images
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: radarr
+  namespace: media
+  annotations: { reloader.stakater.com/auto: "true" }
+spec:
+  replicas: 1
+  strategy: { type: Recreate }
+  selector: { matchLabels: { app: radarr } }
+  template:
+    metadata: { labels: { app: radarr } }
+    spec:
+      containers:
+        - name: radarr
+          image: lscr.io/linuxserver/radarr:6.4.4.10685-ls324
+          ports: [{ containerPort: 7878 }]
+          envFrom: [{ secretRef: { name: radarr-env } }] # RADARR__AUTH__APIKEY
+          env:
+            - { name: PUID, value: "1000" } # owner of /volume1/media on the NAS
+            - { name: PGID, value: "1000" }
+            - { name: TZ, value: Europe/Amsterdam }
+            - { name: RADARR__AUTH__METHOD, value: External } # Authentik forward auth does the login
+          volumeMounts:
+            - { name: config, mountPath: /config }
+            - { name: media, mountPath: /media }
+          readinessProbe:
+            httpGet: { path: /ping, port: 7878 }
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits: { memory: 1Gi }
+      volumes:
+        - name: config
+          persistentVolumeClaim: { claimName: radarr-config }
+        - name: media
+          persistentVolumeClaim: { claimName: media }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: radarr, namespace: media }
+spec:
+  selector: { app: radarr }
+  ports: [{ port: 80, targetPort: 7878 }]
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: radarr
+  namespace: media
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: platform-forward-auth@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: radarr.k3s.home.klrnbk.nl
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: radarr, port: { number: 80 } } }
