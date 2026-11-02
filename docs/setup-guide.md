@@ -15,8 +15,8 @@ Internet user    -> Cloudflare (auth.klrnbk.nl, panel.klrnbk.nl) -> tunnel -> cl
 
 | Where | What |
 | --- | --- |
-| K3s cluster | Traefik, cert-manager, MetalLB, Longhorn, CNPG, Argo CD, Phase (self-hosted) + operator, Reloader, bind9, Authentik, cloudflared, Outline, ConvertX, draw.io, withoutBG, Calagopus panel, Sonarr, Radarr, Prowlarr (+ Gluetun, FlareSolverr), Bazarr, Profilarr, Seerr, Cleanuparr, the Appiecal fleet and your other apps |
-| NAS (UGREEN, Docker) | Jellyfin, Gluetun + qBittorrent, Garage (S3), restic to the Storage Box, NFS shares |
+| K3s cluster | Traefik, cert-manager, MetalLB, Longhorn, CNPG, Argo CD, Phase (self-hosted) + operator, Reloader, bind9, Authentik, cloudflared, Outline, ConvertX, draw.io, withoutBG, Calagopus panel, Sonarr, Radarr, Prowlarr (+ Gluetun, FlareSolverr), Bazarr, Profilarr, Seerr, Cleanuparr, Tdarr server, the Appiecal fleet and your other apps |
+| NAS (UGREEN, Docker) | Jellyfin, Gluetun + qBittorrent, Tdarr node (Quick Sync), Garage (S3), restic to the Storage Box, NFS shares |
 | External server | Calagopus Wings and the game servers |
 | Hetzner Storage Box | Offsite restic snapshots (no media) |
 
@@ -29,7 +29,8 @@ Addresses below `.50` are outside the Deco DHCP pool, so nothing else will ever 
 | 192.168.2.10 | K3s API VIP (kube-vip) | `k3s.home.klrnbk.nl` |
 | 192.168.2.20 | Traefik (MetalLB) | All web traffic |
 | 192.168.2.21 | bind9 (MetalLB) | DNS, port 53 TCP/UDP |
-| 192.168.2.22 - .29 | MetalLB spare | Future TCP/UDP services |
+| 192.168.2.22 | Tdarr server port (MetalLB) | 8266 TCP, for the node on the NAS |
+| 192.168.2.23 - .29 | MetalLB spare | Future TCP/UDP services |
 | 192.168.2.100 | rpi-1 | K3s server, `--cluster-init` |
 | 192.168.2.101 | rpi-2 | K3s server |
 | 192.168.2.102 | rpi-3 | K3s server |
@@ -51,7 +52,7 @@ Make sure the Pi's and NAS have **address reservations** in the Deco app (More >
 | ConvertX | `convert.k3s.home.klrnbk.nl` | LAN |
 | draw.io | `draw.k3s.home.klrnbk.nl` | LAN |
 | withoutBG | `removebg.k3s.home.klrnbk.nl` | LAN |
-| Sonarr / Radarr / Prowlarr / Bazarr / Profilarr / Cleanuparr | `sonarr.`, `radarr.`, `prowlarr.`, `bazarr.`, `profilarr.`, `cleanuparr.k3s.home.klrnbk.nl` (forward auth) | LAN |
+| Sonarr / Radarr / Prowlarr / Bazarr / Profilarr / Cleanuparr | `sonarr.`, `radarr.`, `prowlarr.`, `bazarr.`, `profilarr.`, `cleanuparr.`, `tdarr.k3s.home.klrnbk.nl` (forward auth) | LAN |
 | Seerr | `seerr.k3s.home.klrnbk.nl` (Jellyfin login) | LAN |
 | Longhorn UI | `longhorn.k3s.home.klrnbk.nl` | LAN |
 | qBittorrent | `192.168.2.104:8080` | LAN |
@@ -2898,7 +2899,7 @@ spec:
 
 ## Part 11c: Media stack
 
-Downloads happen on the NAS (Gluetun + qBittorrent), everything else runs in the cluster in namespace `media`: Sonarr, Radarr, Prowlarr (behind its own Gluetun + FlareSolverr), Bazarr, Profilarr, Seerr and Cleanuparr. Jellyfin stays on the NAS.
+Downloads happen on the NAS (Gluetun + qBittorrent), everything else runs in the cluster in namespace `media`: Sonarr, Radarr, Prowlarr (behind its own Gluetun + FlareSolverr), Bazarr, Profilarr, Seerr, Cleanuparr and the Tdarr server. Jellyfin and the Tdarr node (it transcodes with the NAS's Quick Sync; the Pi's have no hardware encoder) stay on the NAS.
 
 The one rule that makes it work: **everything sees `/volume1/media` as `/media`**. Downloads and library then sit on one filesystem, so imports are instant hardlinks instead of copies, and no remote path mappings are needed.
 
@@ -2910,7 +2911,8 @@ The one rule that makes it work: **everything sees `/volume1/media` as `/media`*
 ├── movies/                        # Radarr, profile Movies 2160p
 ├── anime-movies/                  # Radarr, profile Anime 1080p
 ├── series/                        # Sonarr, profile TV 1080p
-└── anime/                         # Sonarr, profile Anime 1080p, series type Anime
+├── anime/                         # Sonarr, profile Anime 1080p, series type Anime
+└── tdarr-cache/                   # Tdarr transcode cache, /temp in the Tdarr server and node
 ```
 
 **How a request flows**: Seerr (Jellyfin login) -> Sonarr/Radarr -> Prowlarr searches the indexers through the cluster's VPN -> Sonarr/Radarr send the torrent to qBittorrent on the NAS (its own VPN) -> hardlink into the library -> Bazarr adds subtitles -> Jellyfin. Profilarr keeps the quality profiles and custom formats in Sonarr/Radarr in sync with the Dumpstarr database, and Cleanuparr removes stalled and malicious downloads.
@@ -2928,8 +2930,8 @@ Use the same numbers for `PUID`/`PGID` in the NAS compose file below. Seerr's `f
 Create the two new library folders (UGOS File Manager, or over SSH):
 
 ```bash
-mkdir -p /volume1/media/anime /volume1/media/anime-movies /volume1/media/downloads/complete/{radarr,sonarr}
-chown -R <uid>:<gid> /volume1/media/anime /volume1/media/anime-movies /volume1/media/downloads
+mkdir -p /volume1/media/anime /volume1/media/anime-movies /volume1/media/tdarr-cache /volume1/media/downloads/complete/{radarr,sonarr}
+chown -R <uid>:<gid> /volume1/media/anime /volume1/media/anime-movies /volume1/media/tdarr-cache /volume1/media/downloads
 ```
 
 The NFS rule for `/volume1/media` (client `192.168.2.0/24`, read/write, no mapping) is already there from Part 5, step 1.
@@ -2969,6 +2971,31 @@ services:
       - ./qbittorrent:/config
       - /volume1/media:/media
     restart: unless-stopped
+
+  tdarr-node: # not behind the VPN: it only talks to the Tdarr server in the cluster
+    image: ghcr.io/haveagitgat/tdarr_node:2.62.01
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - UMASK=002
+      - TZ=Europe/Amsterdam
+      - nodeName=nas
+      - serverURL=http://192.168.2.22:8266
+      - apiKey=<TDARR_API_KEY from Phase>
+      - inContainer=true
+      - ffmpegVersion=7
+      - nodeType=mapped        # sees the same /media and /temp paths as the server
+      - transcodegpuWorkers=1  # one Quick Sync job; leaves room for Jellyfin's transcodes
+      - transcodecpuWorkers=0  # the NAS CPU is too slow for software encodes
+      - healthcheckgpuWorkers=0
+      - healthcheckcpuWorkers=1
+    devices: [/dev/dri:/dev/dri]
+    volumes:
+      - ./tdarr-node/configs:/app/configs
+      - ./tdarr-node/logs:/app/logs
+      - /volume1/media:/media
+      - /volume1/media/tdarr-cache:/temp
+    restart: unless-stopped
 ```
 
 Move qBittorrent's old `/config` folder from rpi-4 so its settings carry over, then in the web UI (`http://192.168.2.104:8080`), **Options**:
@@ -2995,6 +3022,7 @@ Generate the three API keys yourself (`openssl rand -hex 16` each), so a rebuilt
 | `media-radarr` | `RADARR__AUTH__APIKEY` | `radarr-env` |
 | `media-prowlarr` | `PROWLARR__AUTH__APIKEY` | `prowlarr-env` |
 | `media-gluetun` | `WIREGUARD_PRIVATE_KEY`, `HTTPPROXY_USER`, `HTTPPROXY_PASSWORD` (pick any user, `openssl rand -hex 16` as password) | `gluetun-env` |
+| `media-tdarr` | `TDARR_API_KEY`: `tapi_` followed by `openssl rand -hex 16`. Also goes into the NAS compose file as the node's `apiKey` | `tdarr-env` (as `seededApiKey`) |
 | `media-shared` | `QBITTORRENT_USER`, `QBITTORRENT_PASSWORD`, one `DISCORD_WEBHOOK_<APP>` per app (step 5) | not synced: values you type into app UIs |
 
 The other apps (Seerr, Profilarr, Bazarr, Cleanuparr) get those keys through their own UI, copied from Phase. Their own API keys are never used by another app, so they can stay generated.
@@ -3696,6 +3724,141 @@ spec:
             backend: { service: { name: cleanuparr, port: { number: 80 } } }
 ```
 
+#### 10. `tdarr/`: Tdarr server
+
+Tdarr's own login stays on (`auth=true`): the server port `192.168.2.22:8266` is plain TCP on the LAN, outside Traefik and the forward auth. That means the web UI asks for Authentik and then Tdarr's login. The cache folder is a subfolder of the media share, so a finished file is moved into the library with a rename, not a copy over the network.
+
+`tdarr.yaml`:
+
+```yaml
+# Tdarr server only: it scans the libraries and hands out jobs. The transcoding node runs on
+# the NAS (Docker, Intel Quick Sync); the Pi's have no hardware encoder.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata: { name: tdarr-config, namespace: media }
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: longhorn
+  resources: { requests: { storage: 5Gi } } # SQLite database, job reports, plugins
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tdarr
+  namespace: media
+  annotations: { reloader.stakater.com/auto: "true" }
+spec:
+  replicas: 1
+  strategy: { type: Recreate }
+  selector: { matchLabels: { app: tdarr } }
+  template:
+    metadata: { labels: { app: tdarr } }
+    spec:
+      containers:
+        - name: tdarr
+          image: ghcr.io/haveagitgat/tdarr:2.62.01
+          ports:
+            - { name: webui, containerPort: 8265 }
+            - { name: server, containerPort: 8266 }
+          envFrom: [{ secretRef: { name: tdarr-env } }] # seededApiKey
+          env:
+            - { name: PUID, value: "1000" } # owner of /volume1/media on the NAS
+            - { name: PGID, value: "1000" }
+            - { name: UMASK, value: "002" }
+            - { name: TZ, value: Europe/Amsterdam }
+            - { name: serverIP, value: 0.0.0.0 }
+            - { name: serverPort, value: "8266" }
+            - { name: webUIPort, value: "8265" }
+            - { name: internalNode, value: "false" } # no transcoding on the Pi's
+            - { name: inContainer, value: "true" }
+            - { name: ffmpegVersion, value: "7" }
+            - { name: auth, value: "true" } # port 8266 is reachable on the LAN without forward auth
+            - { name: openBrowser, value: "false" }
+            - { name: maxLogSizeMB, value: "10" }
+            - { name: cronPluginUpdate, value: "0 4 * * *" }
+          volumeMounts:
+            - { name: config, mountPath: /app/server, subPath: server }
+            - { name: config, mountPath: /app/configs, subPath: configs }
+            - { name: config, mountPath: /app/logs, subPath: logs }
+            - { name: media, mountPath: /media }
+            - { name: media, mountPath: /temp, subPath: tdarr-cache } # same cache folder as the NAS node
+          resources:
+            requests: { cpu: 100m, memory: 512Mi }
+            limits: { memory: 2Gi } # library scans of large folders
+      volumes:
+        - name: config
+          persistentVolumeClaim: { claimName: tdarr-config }
+        - name: media
+          persistentVolumeClaim: { claimName: media }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: tdarr, namespace: media }
+spec:
+  selector: { app: tdarr }
+  ports: [{ name: webui, port: 80, targetPort: 8265 }]
+---
+# Server port for nodes outside the cluster (the NAS); plain TCP, so not through Traefik
+apiVersion: v1
+kind: Service
+metadata:
+  name: tdarr-server
+  namespace: media
+  annotations: { metallb.io/loadBalancerIPs: 192.168.2.22 }
+spec:
+  type: LoadBalancer
+  selector: { app: tdarr }
+  ports: [{ name: server, port: 8266, targetPort: 8266 }]
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tdarr
+  namespace: media
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: platform-forward-auth@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: tdarr.k3s.home.klrnbk.nl
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: tdarr, port: { number: 80 } } }
+```
+
+`phase-secret-tdarr.yaml`:
+
+```yaml
+apiVersion: secrets.phase.dev/v1alpha1
+kind: PhaseSecret
+metadata: { name: tdarr-env, namespace: media }
+spec:
+  phaseApp: media-tdarr
+  phaseAppEnv: production
+  phaseAppEnvPath: /
+  phaseHost: https://phase.k3s.home.klrnbk.nl
+  pollingInterval: 30
+  authentication:
+    serviceToken:
+      serviceTokenSecretReference:
+        secretName: phase-service-token
+        secretNamespace: phase-system
+  managedSecretReferences:
+    - secretName: tdarr-env
+      secretNamespace: media
+      secretType: Opaque
+      processors:
+        TDARR_API_KEY: { asName: seededApiKey } # Tdarr's variable names are camelCase
+```
+
+`kustomization.yaml`:
+
+```yaml
+resources: [tdarr.yaml, phase-secret-tdarr.yaml]
+```
+
 Push, and check:
 
 ```bash
@@ -3803,6 +3966,35 @@ Same as Sonarr, with root folders `/media/movies` and `/media/anime-movies`, Cat
 5. **Malware Blocker**: enable, blocklist type Blacklist, URL `https://cleanuparr.pages.dev/static/blacklist`, delete known malware on. Torrents with `.exe`, `.lnk` and the like are removed and blocklisted.
 6. **Notifications > Discord**: webhook `DISCORD_WEBHOOK_CLEANUPARR`, events for stalled, failed import, malware and download removed.
 
+#### Tdarr (`tdarr.k3s.home.klrnbk.nl`)
+
+Tdarr changes files that Sonarr and Radarr manage, so it only gets the 1080p libraries and only touches files that aren't HEVC yet. **Movies stays out**: those are 4K HDR/Dolby Vision, and a re-encode drops the DV layer for little gain.
+
+1. Log in as `admin` with `TDARR_API_KEY` as the password (`seededApiKey` creates that user on first start), then set your own password from the account menu.
+2. **Nodes**: the node `nas` shows up with 1 GPU transcode worker. If it doesn't, check the node's logs on the NAS (wrong `apiKey`, or the LoadBalancer IP isn't up yet).
+3. **Flows > Create flow** `Shrink to HEVC (QSV)`, plugins connected top to bottom:
+
+   | Plugin | Settings |
+   | --- | --- |
+   | Input File | |
+   | Check Video Codec | Codec `hevc`. Output 1 (already HEVC): connect nothing, the flow ends. Output 2: continue |
+   | FFmpeg Command Start | |
+   | FFmpeg Command Set Video Encoder | Output Codec `hevc`, Hardware Encoding on, Hardware Type `qsv`, FFmpeg Quality `23` |
+   | FFmpeg Command Set Container | Container `mkv` (keeps the file name, so Sonarr, Radarr and Bazarr's subtitles keep matching) |
+   | FFmpeg Command Execute | |
+   | Compare File Size Ratio | Greater than `0`, less than `90`. Output 1 (in range): continue. Output 2 (not smaller): connect nothing, the original stays |
+   | Replace Original File | |
+
+4. **Libraries > Add**, one per folder, each with Transcode cache `/temp`, Folder watch on, and flow `Shrink to HEVC (QSV)` on the Transcode Options tab:
+
+   | Library | Source |
+   | --- | --- |
+   | Series | `/media/series` |
+   | Anime | `/media/anime` |
+   | Anime Movies | `/media/anime-movies` |
+
+Sonarr and Radarr see the new file on their next scheduled disk refresh. Its name is unchanged, so nothing has to be re-imported. A transcoded file no longer shares the hardlink with the seeding copy in `downloads`, so both take space until the torrent is removed (at most 7 days).
+
 ### Step 6: Import your existing library
 
 Fresh installs, so Sonarr and Radarr start empty:
@@ -3823,6 +4015,7 @@ Existing files that don't meet a profile's cutoff are upgraded over time. Turn o
 - [ ] The torrent appears in qBittorrent under the right category, and after import `ls -li` shows the same inode in `downloads/complete/...` and the library folder (hardlink)
 - [ ] Bazarr adds EN and NL subtitles, skipping languages already embedded
 - [ ] Discord: an import message from Sonarr/Radarr, and Profilarr pings after its next database pull
+- [ ] Tdarr: node `nas` connected, a test H264 episode comes out smaller and still plays in Infuse and the web client
 
 ## Part 12: Your own apps, updates and troubleshooting
 

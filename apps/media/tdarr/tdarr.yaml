@@ -1,0 +1,95 @@
+# Tdarr server only: it scans the libraries and hands out jobs. The transcoding node runs on
+# the NAS (Docker, Intel Quick Sync); the Pi's have no hardware encoder.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata: { name: tdarr-config, namespace: media }
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: longhorn
+  resources: { requests: { storage: 5Gi } } # SQLite database, job reports, plugins
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tdarr
+  namespace: media
+  annotations: { reloader.stakater.com/auto: "true" }
+spec:
+  replicas: 1
+  strategy: { type: Recreate }
+  selector: { matchLabels: { app: tdarr } }
+  template:
+    metadata: { labels: { app: tdarr } }
+    spec:
+      containers:
+        - name: tdarr
+          image: ghcr.io/haveagitgat/tdarr:2.62.01
+          ports:
+            - { name: webui, containerPort: 8265 }
+            - { name: server, containerPort: 8266 }
+          envFrom: [{ secretRef: { name: tdarr-env } }] # seededApiKey
+          env:
+            - { name: PUID, value: "1000" } # owner of /volume1/media on the NAS
+            - { name: PGID, value: "1000" }
+            - { name: UMASK, value: "002" }
+            - { name: TZ, value: Europe/Amsterdam }
+            - { name: serverIP, value: 0.0.0.0 }
+            - { name: serverPort, value: "8266" }
+            - { name: webUIPort, value: "8265" }
+            - { name: internalNode, value: "false" } # no transcoding on the Pi's
+            - { name: inContainer, value: "true" }
+            - { name: ffmpegVersion, value: "7" }
+            - { name: auth, value: "true" } # port 8266 is reachable on the LAN without forward auth
+            - { name: openBrowser, value: "false" }
+            - { name: maxLogSizeMB, value: "10" }
+            - { name: cronPluginUpdate, value: "0 4 * * *" }
+          volumeMounts:
+            - { name: config, mountPath: /app/server, subPath: server }
+            - { name: config, mountPath: /app/configs, subPath: configs }
+            - { name: config, mountPath: /app/logs, subPath: logs }
+            - { name: media, mountPath: /media }
+            - { name: media, mountPath: /temp, subPath: tdarr-cache } # same cache folder as the NAS node
+          resources:
+            requests: { cpu: 100m, memory: 512Mi }
+            limits: { memory: 2Gi } # library scans of large folders
+      volumes:
+        - name: config
+          persistentVolumeClaim: { claimName: tdarr-config }
+        - name: media
+          persistentVolumeClaim: { claimName: media }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: tdarr, namespace: media }
+spec:
+  selector: { app: tdarr }
+  ports: [{ name: webui, port: 80, targetPort: 8265 }]
+---
+# Server port for nodes outside the cluster (the NAS); plain TCP, so not through Traefik
+apiVersion: v1
+kind: Service
+metadata:
+  name: tdarr-server
+  namespace: media
+  annotations: { metallb.io/loadBalancerIPs: 192.168.2.22 }
+spec:
+  type: LoadBalancer
+  selector: { app: tdarr }
+  ports: [{ name: server, port: 8266, targetPort: 8266 }]
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tdarr
+  namespace: media
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: platform-forward-auth@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: tdarr.k3s.home.klrnbk.nl
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: tdarr, port: { number: 80 } } }
