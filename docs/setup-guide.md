@@ -54,6 +54,7 @@ Make sure the Pi's and NAS have **address reservations** in the Deco app (More >
 | withoutBG | `removebg.k3s.home.klrnbk.nl` | LAN |
 | Sonarr / Radarr / Prowlarr / Bazarr / Profilarr / Cleanuparr | `sonarr.`, `radarr.`, `prowlarr.`, `bazarr.`, `profilarr.`, `cleanuparr.`, `tdarr.k3s.home.klrnbk.nl` (forward auth) | LAN |
 | Seerr | `seerr.k3s.home.klrnbk.nl` (Jellyfin login) | LAN |
+| qui (qBittorrent UI) | `qui.k3s.home.klrnbk.nl` (Authentik OIDC) | LAN |
 | Longhorn UI | `longhorn.k3s.home.klrnbk.nl` | LAN |
 | qBittorrent | `192.168.2.104:8080` | LAN |
 
@@ -3023,6 +3024,7 @@ Generate the three API keys yourself (`openssl rand -hex 16` each), so a rebuilt
 | `media-prowlarr` | `PROWLARR__AUTH__APIKEY` | `prowlarr-env` |
 | `media-gluetun` | `WIREGUARD_PRIVATE_KEY`, `HTTPPROXY_USER`, `HTTPPROXY_PASSWORD` (pick any user, `openssl rand -hex 16` as password) | `gluetun-env` |
 | `media-tdarr` | `TDARR_API_KEY`: `tapi_` followed by `openssl rand -hex 16`. Also goes into the NAS compose file as the node's `apiKey` | `tdarr-env` (as `seededApiKey`) |
+| `media-qui` | `QUI__SESSION_SECRET` (`openssl rand -hex 32`), `QUI__OIDC_CLIENT_ID`, `QUI__OIDC_CLIENT_SECRET` (from the Authentik provider, step 5), `QUI__OIDC_ALLOWED_EMAIL` (your Authentik email) | `qui-env` |
 | `media-shared` | `QBITTORRENT_USER`, `QBITTORRENT_PASSWORD`, one `DISCORD_WEBHOOK_<APP>` per app (step 5) | not synced: values you type into app UIs |
 
 The other apps (Seerr, Profilarr, Bazarr, Cleanuparr) get those keys through their own UI, copied from Phase. Their own API keys are never used by another app, so they can stay generated.
@@ -3859,6 +3861,116 @@ spec:
 resources: [tdarr.yaml, phase-secret-tdarr.yaml]
 ```
 
+#### 11. `qui/`: qBittorrent web UI
+
+qui logs in through Authentik itself (OIDC), so its ingress has no forward auth: you log in once. Its built-in password login is switched off. `QUI__OIDC_ALLOWED_EMAIL` limits it to your own account, even if other Authentik users could reach the application. qui must reach the issuer at startup, which works because CoreDNS forwards `home.klrnbk.nl` to bind9 (Part 6). Create the Authentik provider (step 5) **before** you push this folder, or the pod won't start.
+
+`qui.yaml`:
+
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata: { name: qui-config, namespace: media }
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: longhorn
+  resources: { requests: { storage: 1Gi } } # config.toml, SQLite, tracker icons, backups
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qui
+  namespace: media
+  annotations: { reloader.stakater.com/auto: "true" }
+spec:
+  replicas: 1
+  strategy: { type: Recreate }
+  selector: { matchLabels: { app: qui } }
+  template:
+    metadata: { labels: { app: qui } }
+    spec:
+      containers:
+        - name: qui
+          image: ghcr.io/autobrr/qui:v1.35.0
+          ports: [{ containerPort: 7476 }]
+          # QUI__SESSION_SECRET, QUI__OIDC_CLIENT_ID, QUI__OIDC_CLIENT_SECRET, QUI__OIDC_ALLOWED_EMAIL
+          envFrom: [{ secretRef: { name: qui-env } }]
+          env:
+            - { name: PUID, value: "1000" }
+            - { name: PGID, value: "1000" }
+            - { name: TZ, value: Europe/Amsterdam }
+            - { name: QUI__HOST, value: 0.0.0.0 }
+            - { name: QUI__PORT, value: "7476" }
+            - { name: QUI__ALLOWED_HOSTS, value: "qui.k3s.home.klrnbk.nl,localhost" }
+            - { name: QUI__OIDC_ENABLED, value: "true" } # Authentik login instead of forward auth + a second login
+            - { name: QUI__OIDC_ISSUER, value: https://auth.home.klrnbk.nl/application/o/qui/ }
+            - { name: QUI__OIDC_REDIRECT_URL, value: https://qui.k3s.home.klrnbk.nl/api/auth/oidc/callback }
+            - { name: QUI__OIDC_DISABLE_BUILT_IN_LOGIN, value: "true" }
+            - { name: QUI__DISABLE_SELF_UPDATE, value: "true" } # Renovate bumps the image
+          volumeMounts: [{ name: config, mountPath: /config }]
+          readinessProbe:
+            httpGet: { path: /healthz/readiness, port: 7476 }
+          livenessProbe:
+            httpGet: { path: /healthz/liveness, port: 7476 }
+            initialDelaySeconds: 30
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+            limits: { memory: 512Mi }
+      volumes:
+        - name: config
+          persistentVolumeClaim: { claimName: qui-config }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: qui, namespace: media }
+spec:
+  selector: { app: qui }
+  ports: [{ port: 80, targetPort: 7476 }]
+---
+# No forward auth: qui logs in through Authentik itself (OIDC)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata: { name: qui, namespace: media }
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: qui.k3s.home.klrnbk.nl
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: qui, port: { number: 80 } } }
+```
+
+`phase-secret-qui.yaml`:
+
+```yaml
+apiVersion: secrets.phase.dev/v1alpha1
+kind: PhaseSecret
+metadata: { name: qui-env, namespace: media }
+spec:
+  phaseApp: media-qui
+  phaseAppEnv: production
+  phaseAppEnvPath: /
+  phaseHost: https://phase.k3s.home.klrnbk.nl
+  pollingInterval: 30
+  authentication:
+    serviceToken:
+      serviceTokenSecretReference:
+        secretName: phase-service-token
+        secretNamespace: phase-system
+  managedSecretReferences:
+    - secretName: qui-env
+      secretNamespace: media
+      secretType: Opaque
+```
+
+`kustomization.yaml`:
+
+```yaml
+resources: [qui.yaml, phase-secret-qui.yaml]
+```
+
 Push, and check:
 
 ```bash
@@ -3995,6 +4107,24 @@ Tdarr changes files that Sonarr and Radarr manage, so it only gets the 1080p lib
 
 Sonarr and Radarr see the new file on their next scheduled disk refresh. Its name is unchanged, so nothing has to be re-imported. A transcoded file no longer shares the hardlink with the seeding copy in `downloads`, so both take space until the torrent is removed (at most 7 days).
 
+#### qui (`qui.k3s.home.klrnbk.nl`)
+
+1. **In Authentik** (before pushing `qui/`): **Applications > Providers > Create > OAuth2/OpenID Provider**:
+
+   | Setting | Value |
+   | --- | --- |
+   | Name | `qui` |
+   | Authorization flow | default (explicit consent) |
+   | Client type | Confidential |
+   | Redirect URIs | Strict, `https://qui.k3s.home.klrnbk.nl/api/auth/oidc/callback` |
+   | Scopes | `openid`, `email`, `profile` |
+
+   Then **Applications > Create**: name `qui`, slug `qui` (the slug is part of the issuer URL in `qui.yaml`), provider `qui`. Under the application's **Policy / Group / User Bindings**, bind only your own user. Copy the client ID and secret into Phase (`media-qui`).
+2. Push `apps/media/qui/`, open `qui.k3s.home.klrnbk.nl` and log in with **OpenID Connect**.
+3. **Instances > Add**: name `NAS`, URL `http://192.168.2.104:8080`, username and password from `media-shared`. qui talks to qBittorrent's API from the cluster; that traffic is LAN-only and never goes through the VPN.
+
+qBittorrent's own web UI on `:8080` keeps working; qui is just a nicer front end on top of it.
+
 ### Step 6: Import your existing library
 
 Fresh installs, so Sonarr and Radarr start empty:
@@ -4016,6 +4146,7 @@ Existing files that don't meet a profile's cutoff are upgraded over time. Turn o
 - [ ] Bazarr adds EN and NL subtitles, skipping languages already embedded
 - [ ] Discord: an import message from Sonarr/Radarr, and Profilarr pings after its next database pull
 - [ ] Tdarr: node `nas` connected, a test H264 episode comes out smaller and still plays in Infuse and the web client
+- [ ] qui: log in through Authentik, the `NAS` instance shows your torrents
 
 ## Part 12: Your own apps, updates and troubleshooting
 
