@@ -63,19 +63,22 @@ kind: Service
 metadata: { name: tdarr, namespace: media }
 spec:
   selector: { app: tdarr }
-  ports: [{ name: webui, port: 80, targetPort: 8265 }]
+  ports: [{ name: webui, port: 80, targetPort: 8265 }, { name: server, port: 81, targetPort: 8266 }]
 ---
-# Server port for nodes outside the cluster (the NAS); plain TCP, so not through Traefik
-# apiVersion: v1
-# kind: Service
-# metadata:
-#   name: tdarr-server
-#   namespace: media
-#   annotations: { metallb.io/loadBalancerIPs: 192.168.2.22 }
-# spec:
-#   type: LoadBalancer
-#   selector: { app: tdarr }
-#   ports: [{ name: server, port: 8266, targetPort: 8266 }]
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tdarr
+  namespace: media
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: tdarr-api.k3s.home.klrnbk.nl
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: tdarr, port: { number: 81 } } }
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
