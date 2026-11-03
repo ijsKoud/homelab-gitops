@@ -48,7 +48,7 @@ spec:
             - { name: config, mountPath: /app/configs, subPath: configs }
             - { name: config, mountPath: /app/logs, subPath: logs }
             - { name: media, mountPath: /media }
-            - { name: media, mountPath: /temp, subPath: tdarr-cache } # same cache folder as the NAS node
+            - { name: media, mountPath: /temp, subPath: cache } # same cache folder as the NAS node
           resources:
             requests: { cpu: 100m, memory: 512Mi }
             limits: { memory: 2Gi } # library scans of large folders

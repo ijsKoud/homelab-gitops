@@ -2912,7 +2912,7 @@ The one rule that makes it work: **everything sees `/volume1/media` as `/media`*
 ├── anime-movies/                  # Radarr, profile Anime 1080p
 ├── series/                        # Sonarr, profile TV 1080p
 ├── anime/                         # Sonarr, profile Anime 1080p, series type Anime
-└── tdarr-cache/                   # Tdarr transcode cache, /temp in the Tdarr server and node
+└── cache/                         # Tdarr transcode cache, /temp in the Tdarr server and node
 ```
 
 **How a request flows**: Seerr (Jellyfin login) -> Sonarr/Radarr -> Prowlarr searches the indexers through the cluster's VPN -> Sonarr/Radarr send the torrent to qBittorrent on the NAS (its own VPN) -> hardlink into the library -> Bazarr adds subtitles -> Jellyfin. Profilarr keeps the quality profiles and custom formats in Sonarr/Radarr in sync with the Dumpstarr database, and Cleanuparr removes stalled and malicious downloads.
@@ -2930,8 +2930,8 @@ Use the same numbers for `PUID`/`PGID` in the NAS compose file below. Seerr's `f
 Create the two new library folders (UGOS File Manager, or over SSH):
 
 ```bash
-mkdir -p /volume1/media/anime /volume1/media/anime-movies /volume1/media/tdarr-cache /volume1/media/downloads/complete/{radarr,sonarr}
-chown -R <uid>:<gid> /volume1/media/anime /volume1/media/anime-movies /volume1/media/tdarr-cache /volume1/media/downloads
+mkdir -p /volume1/media/anime /volume1/media/anime-movies /volume1/media/downloads/complete/{radarr,sonarr}
+chown -R <uid>:<gid> /volume1/media/anime /volume1/media/anime-movies /volume1/media/cache /volume1/media/downloads
 ```
 
 The NFS rule for `/volume1/media` (client `192.168.2.0/24`, read/write, no mapping) is already there from Part 5, step 1.
@@ -2994,7 +2994,7 @@ services:
       - ./tdarr-node/configs:/app/configs
       - ./tdarr-node/logs:/app/logs
       - /volume1/media:/media
-      - /volume1/media/tdarr-cache:/temp
+      - /volume1/media/cache:/temp
     restart: unless-stopped
 ```
 
@@ -3781,7 +3781,7 @@ spec:
             - { name: config, mountPath: /app/configs, subPath: configs }
             - { name: config, mountPath: /app/logs, subPath: logs }
             - { name: media, mountPath: /media }
-            - { name: media, mountPath: /temp, subPath: tdarr-cache } # same cache folder as the NAS node
+            - { name: media, mountPath: /temp, subPath: cache } # same cache folder as the NAS node
           resources:
             requests: { cpu: 100m, memory: 512Mi }
             limits: { memory: 2Gi } # library scans of large folders
