@@ -37,9 +37,15 @@ spec:
             - { name: QUI__DISABLE_SELF_UPDATE, value: "true" } # Renovate bumps the image
           volumeMounts: [{ name: config, mountPath: /config }]
           readinessProbe:
-            httpGet: { path: /healthz/readiness, port: 7476 }
+            httpGet:
+              path: /healthz/readiness
+              port: 7476
+              httpHeaders: [{ name: Host, value: localhost }] # qui rejects the pod-IP Host kubelet sends (QUI__ALLOWED_HOSTS)
           livenessProbe:
-            httpGet: { path: /healthz/liveness, port: 7476 }
+            httpGet:
+              path: /healthz/liveness
+              port: 7476
+              httpHeaders: [{ name: Host, value: localhost }]
             initialDelaySeconds: 30
           resources:
             requests: { cpu: 50m, memory: 128Mi }
