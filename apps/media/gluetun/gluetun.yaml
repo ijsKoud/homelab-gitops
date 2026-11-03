@@ -16,6 +16,9 @@ spec:
     spec:
       dnsPolicy: None # all lookups go to Gluetun's DNS (DoT through the tunnel), never to CoreDNS/your ISP
       dnsConfig: { nameservers: [127.0.0.1] }
+      hostAliases: # Prowlarr hands FlareSolverr its proxy URL; inside this pod that proxy is localhost
+        - ip: 127.0.0.1
+          hostnames: [gluetun.media.svc.cluster.local]
       containers:
         - name: gluetun
           image: qmcgaw/gluetun:v3.41.3
