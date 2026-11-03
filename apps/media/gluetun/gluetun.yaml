@@ -21,9 +21,8 @@ spec:
           image: qmcgaw/gluetun:v3.41.3
           securityContext:
             capabilities: { add: [NET_ADMIN] }
-          envFrom: [{ secretRef: { name: gluetun-env } }] # WIREGUARD_PRIVATE_KEY, HTTPPROXY_USER, HTTPPROXY_PASSWORD
+          envFrom: [{ secretRef: { name: gluetun-env } }]
           env:
-            - { name: VPN_SERVICE_PROVIDER, value: nordvpn }
             - { name: VPN_TYPE, value: wireguard }
             - { name: SERVER_COUNTRIES, value: "Switzerland,Sweden" }
             - { name: TZ, value: Europe/Amsterdam }
@@ -35,7 +34,8 @@ spec:
           lifecycle:
             postStart: # clean up IP rules left by an unclean exit (gluetun wiki, Kubernetes page)
               exec:
-                command: ["/bin/sh", "-c", "(ip rule del table 51820; ip -6 rule del table 51820) || true"]
+                command:
+                  ["/bin/sh", "-c", "(ip rule del table 51820; ip -6 rule del table 51820) || true"]
           livenessProbe:
             exec: { command: [/gluetun-entrypoint, healthcheck] }
             initialDelaySeconds: 30
