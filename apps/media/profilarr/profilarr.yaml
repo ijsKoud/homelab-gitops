@@ -20,12 +20,13 @@ spec:
         - name: profilarr
           image: ghcr.io/dictionarry-hub/profilarr:2.3.1
           ports: [{ containerPort: 6868 }]
+          envFrom: [{ secretRef: { name: profilarr-env } }]
           env:
             - { name: PUID, value: "1000" }
             - { name: PGID, value: "1000" }
             - { name: TZ, value: Europe/Amsterdam }
-            - { name: AUTH, value: "off" } # Authentik forward auth does the login
             - { name: ORIGIN, value: https://profilarr.k3s.home.klrnbk.nl }
+            - { name: AUTH, value: oidc }
           volumeMounts: [{ name: config, mountPath: /config }]
           resources:
             requests: { cpu: 50m, memory: 256Mi }
@@ -46,8 +47,6 @@ kind: Ingress
 metadata:
   name: profilarr
   namespace: media
-  annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: platform-forward-auth@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
