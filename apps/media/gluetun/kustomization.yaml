@@ -1,0 +1,1 @@
+resources: [gluetun.yaml, phase-secret-gluetun.yaml]
