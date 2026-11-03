@@ -39,7 +39,7 @@ spec:
             - { name: internalNode, value: "false" } # no transcoding on the Pi's
             - { name: inContainer, value: "true" }
             - { name: ffmpegVersion, value: "7" }
-            - { name: auth, value: "true" } # port 8266 is reachable on the LAN without forward auth
+            - { name: auth, value: "false" } # port 8266 is reachable on the LAN without forward auth
             - { name: openBrowser, value: "false" }
             - { name: maxLogSizeMB, value: "10" }
             - { name: cronPluginUpdate, value: "0 4 * * *" }
@@ -66,16 +66,16 @@ spec:
   ports: [{ name: webui, port: 80, targetPort: 8265 }]
 ---
 # Server port for nodes outside the cluster (the NAS); plain TCP, so not through Traefik
-apiVersion: v1
-kind: Service
-metadata:
-  name: tdarr-server
-  namespace: media
-  annotations: { metallb.io/loadBalancerIPs: 192.168.2.22 }
-spec:
-  type: LoadBalancer
-  selector: { app: tdarr }
-  ports: [{ name: server, port: 8266, targetPort: 8266 }]
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: tdarr-server
+#   namespace: media
+#   annotations: { metallb.io/loadBalancerIPs: 192.168.2.22 }
+# spec:
+#   type: LoadBalancer
+#   selector: { app: tdarr }
+#   ports: [{ name: server, port: 8266, targetPort: 8266 }]
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
