@@ -23,7 +23,7 @@ spec:
     spec:
       containers:
         - name: tdarr
-          image: ghcr.io/haveagitgat/tdarr:2.62.01
+          image: ghcr.io/haveagitgat/tdarr:3.05.00
           ports:
             - { name: webui, containerPort: 8265 }
             - { name: server, containerPort: 8266 }
