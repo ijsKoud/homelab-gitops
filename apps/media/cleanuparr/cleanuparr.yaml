@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: cleanuparr
-          image: ghcr.io/cleanuparr/cleanuparr:2.10.12
+          image: ghcr.io/cleanuparr/cleanuparr:2.11.0
           ports: [{ containerPort: 11011 }]
           env:
             - { name: PUID, value: "1000" }
