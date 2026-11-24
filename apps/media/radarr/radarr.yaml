@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
         - name: radarr
-          image: lscr.io/linuxserver/radarr:6.4.4.10685-ls324
+          image: lscr.io/linuxserver/radarr:7.0.3
           ports: [{ containerPort: 7878 }]
           envFrom: [{ secretRef: { name: radarr-env } }] # RADARR__AUTH__APIKEY
           env:
