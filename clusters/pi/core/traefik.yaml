@@ -17,7 +17,7 @@ spec:
         providers:
           kubernetesCRD: { allowCrossNamespace: true }
         service:
-          type: LoadBalancer
+          spec: { type: LoadBalancer }
           annotations:
             metallb.io/loadBalancerIPs: 192.168.2.20
         additionalArguments:
